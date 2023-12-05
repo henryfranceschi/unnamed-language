@@ -1,5 +1,6 @@
 use std::{collections::VecDeque, iter::FusedIterator};
 
+#[derive(Debug)]
 pub struct Lookahead<const N: usize, I: Iterator> {
     iter: I,
     // TODO: Replace with a fixed size queue.

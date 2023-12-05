@@ -9,6 +9,7 @@ use crate::{
 
 use super::token::Token;
 
+#[derive(Debug)]
 pub struct Scanner<'a> {
     source: &'a str,
     iter: Lookahead<2, CharIndices<'a>>,
@@ -260,7 +261,7 @@ impl<'a> Scanner<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ScanError<'a> {
     pub message: String,
     pub span: Span<'a>,
@@ -269,5 +270,52 @@ pub struct ScanError<'a> {
 impl<'a> ScanError<'a> {
     pub fn new(message: String, span: Span<'a>) -> Self {
         Self { message, span }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Scanner, Span, Token, TokenKind};
+
+    macro_rules! t {
+        ($src:expr, $start:expr, $end:expr, $kind:expr) => {
+            Token::new(Span::new($src, $start, $end), $kind)
+        };
+    }
+
+    #[test]
+    fn var_decl() {
+        use TokenKind::*;
+        let src = "let x = 10;";
+        let mut scanner = Scanner::new(src);
+
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 0, 2, Let)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 4, 4, Identifier)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 6, 6, Equal)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 8, 9, Number)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 10, 10, Semicolon)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 10, 10, Eof)));
+    }
+
+    #[test]
+    fn fun_decl() {
+        use TokenKind::*;
+        let src = "func add(x, y) { return x + y; }";
+        let mut scanner = Scanner::new(src);
+
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 0, 3, Identifier)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 5, 7, Identifier)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 8, 8, LParen)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 9, 9, Identifier)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 10, 10, Comma)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 12, 12, Identifier)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 13, 13, RParen)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 15, 15, LBrace)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 17, 22, Return)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 24, 24, Identifier)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 26, 26, Plus)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 28, 28, Identifier)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 29, 29, Semicolon)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 31, 31, RBrace)));
     }
 }

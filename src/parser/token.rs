@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Token<'a> {
     span: Span<'a>,
     kind: TokenKind,
@@ -22,7 +22,7 @@ impl<'a> Token<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Span<'a> {
     pub(super) source: &'a str,
     /// Start index of the token
