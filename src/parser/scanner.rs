@@ -39,9 +39,10 @@ impl<'a> Scanner<'a> {
 
     pub fn scan(&mut self) -> Result<Token<'a>, ScanError<'a>> {
         self.advance_while(|c| c.is_ascii_whitespace());
+        let c = self.advance();
         self.start = self.end;
 
-        let kind = match self.advance() {
+        let kind = match c {
             /* Identifiers */
             c if c.is_alphabetic() || c == '_' => {
                 return self.identifier();

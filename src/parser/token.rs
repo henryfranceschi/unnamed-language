@@ -24,11 +24,11 @@ impl<'a> Token<'a> {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Span<'a> {
-    pub(super) source: &'a str,
-    /// Start index of the token
-    pub(super) start: usize,
-    /// End index of the token (exclusive)
-    pub(super) end: usize,
+    source: &'a str,
+    /// Start index of the token.
+    start: usize,
+    /// End index of the token (inclusive).
+    end: usize,
 }
 
 impl<'a> Span<'a> {
@@ -37,7 +37,7 @@ impl<'a> Span<'a> {
     }
 
     pub fn slice(&self) -> &str {
-        &self.source[self.start..self.end]
+        &self.source[self.start..=self.end]
     }
 }
 
