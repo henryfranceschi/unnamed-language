@@ -179,7 +179,7 @@ impl<'a> Scanner<'a> {
         F: FnOnce(char) -> bool + Copy,
     {
         let mut advanced = false;
-        while predicate(self.lookahead(0)) {
+        while !self.is_at_end() && predicate(self.lookahead(0)) {
             self.advance();
             advanced = true;
         }
@@ -216,9 +216,7 @@ impl<'a> Scanner<'a> {
 
     fn string(&mut self) -> Result<Token<'a>, ScanError<'a>> {
         // Consume everything until we find a closing quote or we reach the end of the source.
-        while self.lookahead(0) != '"' {
-            self.advance();
-        }
+        self.advance_while(|c| c != '"');
 
         if !self.advance_if_eq('"') {
             Err(self.error("expected closing quotes".to_owned()))
@@ -244,6 +242,10 @@ impl<'a> Scanner<'a> {
         }
 
         Ok(self.token(TokenKind::Number))
+    }
+
+    fn is_at_end(&mut self) -> bool {
+        self.lookahead(0) == Self::EOF_CHAR
     }
 
     fn token(&mut self, kind: TokenKind) -> Token<'a> {
