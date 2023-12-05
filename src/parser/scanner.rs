@@ -200,7 +200,7 @@ impl<'a> Scanner<'a> {
                 ("nil", TokenKind::Nil),
                 ("let", TokenKind::Let),
                 ("mut", TokenKind::Mut),
-                ("fun", TokenKind::Func),
+                ("func", TokenKind::Func),
                 ("class", TokenKind::Class),
                 ("this", TokenKind::This),
                 ("return", TokenKind::Return),
@@ -211,7 +211,12 @@ impl<'a> Scanner<'a> {
             ])
         });
 
-        Ok(self.token(TokenKind::Identifier))
+        let kind = KEYWORDS
+            .get(&self.source[self.start..=self.end])
+            .copied()
+            .unwrap_or(TokenKind::Identifier);
+
+        Ok(self.token(kind))
     }
 
     fn string(&mut self) -> Result<Token<'a>, ScanError<'a>> {
@@ -306,7 +311,7 @@ mod tests {
         let src = "func add(x, y) { return x + y; }";
         let mut scanner = Scanner::new(src);
 
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 0, 3, Identifier)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 0, 3, Func)));
         assert_eq!(scanner.next().unwrap(), Ok(t!(src, 5, 7, Identifier)));
         assert_eq!(scanner.next().unwrap(), Ok(t!(src, 8, 8, LParen)));
         assert_eq!(scanner.next().unwrap(), Ok(t!(src, 9, 9, Identifier)));
