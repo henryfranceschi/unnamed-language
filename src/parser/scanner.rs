@@ -292,6 +292,24 @@ mod tests {
     }
 
     #[test]
+    fn number() {
+        use TokenKind::*;
+        let src = "256.log2()";
+        let mut scanner = Scanner::new(src);
+
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 0, 2, Number)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 3, 3, Period)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 4, 7, Identifier)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 8, 8, LParen)));
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 9, 9, RParen)));
+        
+        let src = "12.34";
+        let mut scanner = Scanner::new(src);
+
+        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 0, 4, Number)));
+    }
+
+    #[test]
     fn var_decl() {
         use TokenKind::*;
         let src = "let x = 10;";
