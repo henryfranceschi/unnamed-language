@@ -1,6 +1,6 @@
 use std::io::BufRead;
 
-use thing::parser::scanner::Scanner;
+use unnamed_language::parser::scanner::Scanner;
 
 fn main() {
     for line in std::io::stdin().lock().lines() {
