@@ -80,7 +80,6 @@ pub enum TokenKind {
     Semicolon,
     Comma,
 
-
     Let,
     Mut,
     Func,
@@ -121,6 +120,7 @@ pub enum TokenKind {
     /* Logical operators. */
     Or,
     And,
+    Not,
 
     This,
     Return,
