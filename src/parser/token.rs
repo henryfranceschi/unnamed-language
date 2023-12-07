@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct Token<'a> {
     span: Span<'a>,
@@ -34,6 +36,30 @@ pub struct Span<'a> {
 impl<'a> Span<'a> {
     pub fn new(source: &'a str, start: usize, end: usize) -> Self {
         Self { source, start, end }
+    }
+
+    pub fn start(&self) -> usize {
+        self.start
+    }
+
+    pub fn end(&self) -> usize {
+        self.end
+    }
+
+    pub fn line_number(&self) -> usize {
+        self.source[..self.start]
+            .chars()
+            .filter(|c| *c == '\n')
+            .count()
+            .add(1)
+    }
+
+    pub fn column_number(&self) -> usize {
+        self.source[..=self.start]
+            .chars()
+            .rev()
+            .take_while(|c| *c != '\n')
+            .count()
     }
 
     pub fn slice(&self) -> &str {
@@ -106,4 +132,29 @@ pub enum TokenKind {
     Else,
 
     Eof,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Span;
+
+    #[test]
+    fn span() {
+        let src = "let x = 10;\nx *= 2";
+
+        // Span for 'let'.
+        let span = Span::new(src, 0, 2);
+        assert_eq!(span.line_number(), 1);
+        assert_eq!(span.column_number(), 1);
+
+        // Span for 'x' on line 1.
+        let span = Span::new(src, 4, 4);
+        assert_eq!(span.line_number(), 1);
+        assert_eq!(span.column_number(), 5);
+
+        // Span for 'x' on line 2.
+        let span = Span::new(src, 12, 12);
+        assert_eq!(span.line_number(), 2);
+        assert_eq!(span.column_number(), 1);
+    }
 }
