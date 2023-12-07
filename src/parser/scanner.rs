@@ -210,6 +210,9 @@ impl<'a> Scanner<'a> {
             "while" => TokenKind::While,
             "if" => TokenKind::If,
             "else" => TokenKind::Else,
+            "not" => TokenKind::Not,
+            "and" => TokenKind::And,
+            "or" => TokenKind::Or,
             _ => TokenKind::Identifier,
         };
 
