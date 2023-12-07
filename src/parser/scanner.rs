@@ -1,6 +1,4 @@
-use std::{collections::HashMap, str::CharIndices};
-
-use once_cell::sync::Lazy;
+use std::str::CharIndices;
 
 use crate::{
     lookahead::Lookahead,
@@ -191,30 +189,29 @@ impl<'a> Scanner<'a> {
         self.advance_while(|c| c == chr)
     }
 
+    fn current(&self) -> &'a str {
+        &self.source[self.start..=self.end]
+    }
+
     fn identifier(&mut self) -> Result<Token<'a>, ScanError<'a>> {
         self.advance_while(|c| c.is_ascii_alphanumeric() || c == '_');
-        static KEYWORDS: Lazy<HashMap<&str, TokenKind>> = Lazy::new(|| {
-            HashMap::from([
-                ("true", TokenKind::True),
-                ("false", TokenKind::False),
-                ("nil", TokenKind::Nil),
-                ("let", TokenKind::Let),
-                ("mut", TokenKind::Mut),
-                ("func", TokenKind::Func),
-                ("class", TokenKind::Class),
-                ("this", TokenKind::This),
-                ("return", TokenKind::Return),
-                ("for", TokenKind::For),
-                ("while", TokenKind::While),
-                ("if", TokenKind::If),
-                ("else", TokenKind::Else),
-            ])
-        });
 
-        let kind = KEYWORDS
-            .get(&self.source[self.start..=self.end])
-            .copied()
-            .unwrap_or(TokenKind::Identifier);
+        let kind = match self.current() {
+            "true" => TokenKind::True,
+            "false" => TokenKind::False,
+            "nil" => TokenKind::Nil,
+            "let" => TokenKind::Let,
+            "mut" => TokenKind::Mut,
+            "func" => TokenKind::Func,
+            "class" => TokenKind::Class,
+            "this" => TokenKind::This,
+            "return" => TokenKind::Return,
+            "for" => TokenKind::For,
+            "while" => TokenKind::While,
+            "if" => TokenKind::If,
+            "else" => TokenKind::Else,
+            _ => TokenKind::Identifier,
+        };
 
         Ok(self.token(kind))
     }
