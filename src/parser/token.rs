@@ -69,7 +69,6 @@ impl<'a> Span<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TokenKind {
-    /* Punctuation. */
     LParen,
     RParen,
     LBrack,
@@ -79,58 +78,43 @@ pub enum TokenKind {
     Period,
     Semicolon,
     Comma,
-
+    Identifier,
     Let,
     Mut,
     Func,
     Class,
-    Identifier,
-
-    /* Literals. */
-    String,
-    Number,
+    Not,
+    Or,
+    And,
+    For,
+    While,
+    If,
+    Else,
+    Return,
+    This,
     True,
     False,
     Nil,
-
-    /* Arithmetic operators. */
+    String,
+    Number,
     StarStar,
     Star,
     Slash,
     Percent,
     Plus,
     Minus,
-
-    /* Assignment operators. */
     Equal,
     PlusEqual,
     MinusEqual,
     StarEqual,
     SlashEqual,
     PercentEqual,
-
-    /* Comparison operators. */
     EqualEqual,
     NotEqual,
     Less,
     LessEqual,
     GreaterEqual,
     Greater,
-
-    /* Logical operators. */
-    Or,
-    And,
-    Not,
-
-    This,
-    Return,
-
-    /* Control flow. */
-    For,
-    While,
-    If,
-    Else,
-
     Eof,
 }
 
