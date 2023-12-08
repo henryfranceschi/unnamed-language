@@ -196,27 +196,9 @@ impl<'a> Scanner<'a> {
     fn identifier(&mut self) -> Result<Token<'a>, ScanError<'a>> {
         self.advance_while(|c| c.is_ascii_alphanumeric() || c == '_');
 
-        let kind = match self.current() {
-            "true" => TokenKind::True,
-            "false" => TokenKind::False,
-            "nil" => TokenKind::Nil,
-            "let" => TokenKind::Let,
-            "mut" => TokenKind::Mut,
-            "func" => TokenKind::Func,
-            "class" => TokenKind::Class,
-            "this" => TokenKind::This,
-            "return" => TokenKind::Return,
-            "for" => TokenKind::For,
-            "while" => TokenKind::While,
-            "if" => TokenKind::If,
-            "else" => TokenKind::Else,
-            "not" => TokenKind::Not,
-            "and" => TokenKind::And,
-            "or" => TokenKind::Or,
-            _ => TokenKind::Identifier,
-        };
-
-        Ok(self.token(kind))
+        Ok(self.token(
+            TokenKind::keyword_kind_from_str(self.current()).unwrap_or(TokenKind::Identifier),
+        ))
     }
 
     fn string(&mut self) -> Result<Token<'a>, ScanError<'a>> {

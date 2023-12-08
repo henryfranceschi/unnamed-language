@@ -118,6 +118,32 @@ pub enum TokenKind {
     Eof,
 }
 
+impl TokenKind {
+    pub fn keyword_kind_from_str(s: &str) -> Option<TokenKind> {
+        let kind = match s {
+            "let" => TokenKind::Let,
+            "mut" => TokenKind::Mut,
+            "func" => TokenKind::Func,
+            "class" => TokenKind::Class,
+            "not" => TokenKind::Not,
+            "or" => TokenKind::Or,
+            "and" => TokenKind::And,
+            "for" => TokenKind::For,
+            "while" => TokenKind::While,
+            "if" => TokenKind::If,
+            "else" => TokenKind::Else,
+            "return" => TokenKind::Return,
+            "this" => TokenKind::This,
+            "true" => TokenKind::True,
+            "false" => TokenKind::False,
+            "nil" => TokenKind::Nil,
+            _ => return None,
+        };
+
+        Some(kind)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Span;
