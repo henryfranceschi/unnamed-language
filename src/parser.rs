@@ -1,6 +1,7 @@
 use crate::lookahead::Lookahead;
 use self::scanner::Scanner;
 
+mod cursor;
 pub mod scanner;
 pub mod token;
 
