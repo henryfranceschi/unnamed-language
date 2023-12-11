@@ -274,7 +274,15 @@ mod tests {
     }
 
     #[test]
-    fn number() {
+    fn scan_eof() {
+        use TokenKind::*;
+
+        let src = "";
+        assert_eq!(Scanner::new(src).scan(), Ok(t!(src, 0, 0, Eof)))
+    }
+
+    #[test]
+    fn scan_number() {
         use TokenKind::*;
         let src = "256.log2()";
         let mut scanner = Scanner::new(src);
@@ -292,7 +300,7 @@ mod tests {
     }
 
     #[test]
-    fn var_decl() {
+    fn scan_var_decl() {
         use TokenKind::*;
         let src = "let x = 10;";
         let mut scanner = Scanner::new(src);
@@ -306,7 +314,7 @@ mod tests {
     }
 
     #[test]
-    fn fun_decl() {
+    fn scan_fun_decl() {
         use TokenKind::*;
         let src = "func add(x, y) { return x + y; }";
         let mut scanner = Scanner::new(src);
