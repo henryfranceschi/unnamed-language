@@ -279,16 +279,16 @@ mod tests {
         let src = "256.log2()";
         let mut scanner = Scanner::new(src);
 
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 0, 2, Number)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 3, 3, Period)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 4, 7, Identifier)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 8, 8, LParen)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 9, 9, RParen)));
-        
+        assert_eq!(scanner.scan(), Ok(t!(src, 0, 3, Number)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 3, 4, Period)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 4, 8, Identifier)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 8, 9, LParen)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 9, 10, RParen)));
+
         let src = "12.34";
         let mut scanner = Scanner::new(src);
 
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 0, 4, Number)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 0, 5, Number)));
     }
 
     #[test]
@@ -297,12 +297,12 @@ mod tests {
         let src = "let x = 10;";
         let mut scanner = Scanner::new(src);
 
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 0, 2, Let)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 4, 4, Identifier)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 6, 6, Equal)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 8, 9, Number)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 10, 10, Semicolon)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 10, 10, Eof)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 0, 3, Let)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 4, 5, Identifier)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 6, 7, Equal)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 8, 10, Number)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 10, 11, Semicolon)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 11, 11, Eof)));
     }
 
     #[test]
@@ -311,19 +311,19 @@ mod tests {
         let src = "func add(x, y) { return x + y; }";
         let mut scanner = Scanner::new(src);
 
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 0, 3, Func)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 5, 7, Identifier)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 8, 8, LParen)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 9, 9, Identifier)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 10, 10, Comma)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 12, 12, Identifier)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 13, 13, RParen)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 15, 15, LBrace)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 17, 22, Return)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 24, 24, Identifier)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 26, 26, Plus)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 28, 28, Identifier)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 29, 29, Semicolon)));
-        assert_eq!(scanner.next().unwrap(), Ok(t!(src, 31, 31, RBrace)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 0, 4, Func)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 5, 8, Identifier)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 8, 9, LParen)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 9, 10, Identifier)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 10, 11, Comma)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 12, 13, Identifier)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 13, 14, RParen)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 15, 16, LBrace)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 17, 23, Return)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 24, 25, Identifier)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 26, 27, Plus)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 28, 29, Identifier)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 29, 30, Semicolon)));
+        assert_eq!(scanner.scan(), Ok(t!(src, 31, 32, RBrace)));
     }
 }

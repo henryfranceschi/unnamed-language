@@ -29,7 +29,7 @@ pub struct Span<'a> {
     source: &'a str,
     /// Start index of the token.
     start: usize,
-    /// End index of the token (inclusive).
+    /// End index of the token (exclusive).
     end: usize,
 }
 
@@ -55,15 +55,16 @@ impl<'a> Span<'a> {
     }
 
     pub fn column_number(&self) -> usize {
-        self.source[..=self.start]
+        self.source[..self.start]
             .chars()
             .rev()
             .take_while(|c| *c != '\n')
             .count()
+            .add(1)
     }
 
     pub fn slice(&self) -> &str {
-        &self.source[self.start..=self.end]
+        &self.source[self.start..self.end]
     }
 }
 
