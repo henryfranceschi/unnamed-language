@@ -1,38 +1,68 @@
 use std::str::Chars;
 
-pub const EOF_CHAR: char = '\0';
+use super::token::Span;
 
 #[derive(Debug)]
 pub struct Cursor<'a> {
+    input: &'a str,
     iter: Chars<'a>,
+    start: usize,
 }
 
 impl<'a> Cursor<'a> {
-    pub fn new(s: &'a str) -> Cursor<'a> {
-        Cursor { iter: s.chars() }
+    pub const EOF_CHAR: char = '\0';
+
+    pub fn new(input: &'a str) -> Cursor<'a> {
+        Cursor {
+            input,
+            iter: input.chars(),
+            start: 0,
+        }
     }
 
-    /// The number of bytes left.
+    pub fn advance(&mut self) -> char {
+        self.iter.next().unwrap_or(Self::EOF_CHAR)
+    }
+
+    pub fn lookahead(&self, n: usize) -> char {
+        self.iter.clone().nth(n).unwrap_or(Self::EOF_CHAR)
+    }
+
+    /// Returns the number of bytes left.
     pub fn bytes_remaining(&self) -> usize {
         self.iter.as_str().len()
     }
 
-    pub fn advance(&mut self) -> char {
-        self.iter.next().unwrap_or(EOF_CHAR)
-    }
-
-    pub fn lookahead(&self, n: usize) -> char {
-        self.iter.clone().nth(n).unwrap_or(EOF_CHAR)
-    }
-
     pub fn is_at_end(&self) -> bool {
-        self.lookahead(0) == EOF_CHAR
+        self.lookahead(0) == Self::EOF_CHAR
+    }
+
+    pub fn start_index(&self) -> usize {
+        self.start
+    }
+
+    pub fn current_index(&self) -> usize {
+        self.input.len() - self.bytes_remaining()
+    }
+
+    pub fn reset_start_index(&mut self) -> usize {
+        let offset = self.start;
+        self.start = self.current_index();
+        offset
+    }
+
+    pub fn span(&self) -> Span<'a> {
+        Span::new(self.input, self.start_index(), self.current_index())
+    }
+
+    pub fn reset_span(&mut self) -> Span<'a> {
+        Span::new(self.input, self.reset_start_index(), self.current_index())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::cursor::{Cursor, EOF_CHAR};
+    use crate::parser::cursor::Cursor;
 
     #[test]
     fn offset() {
@@ -57,10 +87,10 @@ mod tests {
         assert_eq!(c.advance(), 'o');
         assert_eq!(c.advance(), 'n');
         assert_eq!(c.advance(), 'e');
-        assert_eq!(c.advance(), EOF_CHAR);
+        assert_eq!(c.advance(), Cursor::EOF_CHAR);
 
         let mut c = Cursor::new("");
-        assert_eq!(c.advance(), EOF_CHAR);
+        assert_eq!(c.advance(), Cursor::EOF_CHAR);
     }
 
     #[test]
@@ -70,7 +100,7 @@ mod tests {
         assert_eq!(c.advance(), 'o');
 
         let c = Cursor::new("");
-        assert_eq!(c.lookahead(0), EOF_CHAR);
+        assert_eq!(c.lookahead(0), Cursor::EOF_CHAR);
     }
 
     #[test]

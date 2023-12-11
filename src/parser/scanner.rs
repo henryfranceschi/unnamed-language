@@ -15,17 +15,7 @@ pub struct Scanner<'a> {
     end: usize,
 }
 
-impl<'a> Iterator for Scanner<'a> {
-    type Item = Result<Token<'a>, ScanError<'a>>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.scan())
-    }
-}
-
 impl<'a> Scanner<'a> {
-    const EOF_CHAR: char = '\0';
-
     pub fn new(source: &'a str) -> Self {
         Self {
             source,
@@ -138,59 +128,6 @@ impl<'a> Scanner<'a> {
         };
 
         Ok(self.token(kind))
-    }
-
-    fn lookahead(&mut self, n: usize) -> char {
-        self.iter
-            .lookahead(n)
-            .map(|(_, ch)| *ch)
-            .unwrap_or(Self::EOF_CHAR)
-    }
-
-    fn advance(&mut self) -> char {
-        if let Some((idx, chr)) = self.iter.next() {
-            self.end = idx;
-            chr
-        } else {
-            Self::EOF_CHAR
-        }
-    }
-
-    fn advance_if<F>(&mut self, predicate: F) -> bool
-    where
-        F: FnOnce(char) -> bool + Copy,
-    {
-        if predicate(self.lookahead(0)) {
-            self.advance();
-            true
-        } else {
-            false
-        }
-    }
-
-    fn advance_if_eq(&mut self, chr: char) -> bool {
-        self.advance_if(|c| c == chr)
-    }
-
-    fn advance_while<F>(&mut self, predicate: F) -> bool
-    where
-        F: FnOnce(char) -> bool + Copy,
-    {
-        let mut advanced = false;
-        while !self.is_at_end() && predicate(self.lookahead(0)) {
-            self.advance();
-            advanced = true;
-        }
-
-        advanced
-    }
-
-    fn advance_while_eq(&mut self, chr: char) -> bool {
-        self.advance_while(|c| c == chr)
-    }
-
-    fn current(&self) -> &'a str {
-        &self.source[self.start..=self.end]
     }
 
     fn identifier(&mut self) -> Result<Token<'a>, ScanError<'a>> {
