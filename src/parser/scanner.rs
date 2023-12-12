@@ -20,108 +20,84 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn scan(&mut self) -> Result<Token<'a>, ScanError<'a>> {
-        self.advance_while(|c| c.is_ascii_whitespace());
-        let c = self.advance();
-        self.start = self.end;
+        while self.cursor.lookahead(0).is_ascii_whitespace() {
+            self.cursor.advance();
+        }
 
-        let kind = match c {
-            /* Identifiers */
-            c if c.is_alphabetic() || c == '_' => {
-                return self.identifier();
-            }
+        self.cursor.reset_start_index();
 
-            /* Literals */
-            c if c.is_ascii_digit() => {
-                return self.number();
-            }
+        let kind = match (self.cursor.advance(), self.cursor.lookahead(0)) {
+            (c, _) if is_identifier_start(c) => self.identifier(),
 
-            '"' => {
-                return self.string();
+            ('0'..='9', _) => {
+                self.number();
+                TokenKind::Number
             }
 
-            /* Punctuators. */
-            '{' => TokenKind::LBrace,
-            '}' => TokenKind::RBrace,
-            '(' => TokenKind::LParen,
-            ')' => TokenKind::RParen,
-            '[' => TokenKind::LBrack,
-            ']' => TokenKind::RBrack,
-            ';' => TokenKind::Semicolon,
-            ',' => TokenKind::Comma,
-            '.' => TokenKind::Period,
-
-            /* Arithmetic operators. */
-            '+' => {
-                if self.advance_if_eq('=') {
-                    TokenKind::PlusEqual
-                } else {
-                    TokenKind::Plus
-                }
-            }
-            '-' => {
-                if self.advance_if_eq('=') {
-                    TokenKind::MinusEqual
-                } else {
-                    TokenKind::Minus
-                }
-            }
-            '*' => {
-                if self.advance_if_eq('*') {
-                    TokenKind::StarStar
-                } else if self.advance_if_eq('=') {
-                    TokenKind::StarEqual
-                } else {
-                    TokenKind::Star
-                }
-            }
-            '/' => {
-                if self.advance_if_eq('=') {
-                    TokenKind::SlashEqual
-                } else {
-                    TokenKind::Slash
-                }
-            }
-            '%' => {
-                if self.advance_if_eq('=') {
-                    TokenKind::PercentEqual
-                } else {
-                    TokenKind::Percent
-                }
+            ('"', _) => {
+                self.string()?;
+                TokenKind::String
             }
 
-            /* Comparison operators. */
-            '=' => {
-                if self.advance_if_eq('=') {
-                    TokenKind::EqualEqual
-                } else {
-                    TokenKind::Equal
-                }
+            ('{', _) => TokenKind::LBrace,
+            ('}', _) => TokenKind::RBrace,
+            ('(', _) => TokenKind::LParen,
+            (')', _) => TokenKind::RParen,
+            ('[', _) => TokenKind::LBrack,
+            (']', _) => TokenKind::RBrack,
+            (';', _) => TokenKind::Semicolon,
+            (',', _) => TokenKind::Comma,
+            ('.', _) => TokenKind::Period,
+            ('-', '=') => {
+                self.cursor.advance();
+                TokenKind::MinusEqual
             }
-
-            '<' => {
-                if self.advance_if_eq('=') {
-                    TokenKind::LessEqual
-                } else {
-                    TokenKind::Less
-                }
+            ('*', '=') => {
+                self.cursor.advance();
+                TokenKind::StarEqual
             }
-
-            '>' => {
-                if self.advance_if_eq('=') {
-                    TokenKind::GreaterEqual
-                } else {
-                    TokenKind::Greater
-                }
+            ('*', '*') => {
+                self.cursor.advance();
+                TokenKind::StarStar
             }
+            ('/', '=') => {
+                self.cursor.advance();
+                TokenKind::SlashEqual
+            }
+            ('%', '=') => {
+                self.cursor.advance();
+                TokenKind::PercentEqual
+            }
+            ('=', '=') => {
+                self.cursor.advance();
+                TokenKind::EqualEqual
+            }
+            ('<', '=') => {
+                self.cursor.advance();
+                TokenKind::GreaterEqual
+            }
+            ('>', '=') => {
+                self.cursor.advance();
+                TokenKind::GreaterEqual
+            }
+            ('+', _) => TokenKind::Plus,
+            ('-', _) => TokenKind::Minus,
+            ('*', _) => TokenKind::Star,
+            ('/', _) => TokenKind::Slash,
+            ('%', _) => TokenKind::Percent,
+            ('=', _) => TokenKind::Equal,
+            ('<', _) => TokenKind::Greater,
+            ('>', _) => TokenKind::Greater,
 
-            Self::EOF_CHAR => TokenKind::Eof,
+            (Cursor::EOF_CHAR, _) => TokenKind::Eof,
 
-            c => {
-                return Err(self.error(format!("unexpected character '{c}'")));
+            (c, _) => {
+                let message = format!("unexpected character '{c}'");
+                return Err(ScanError::new(message, self.cursor.reset_span()));
             }
         };
 
-        Ok(self.token(kind))
+        Ok(Token::new(self.cursor.reset_span(), kind))
     }
 
     fn identifier(&mut self) -> TokenKind {
