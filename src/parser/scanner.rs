@@ -5,23 +5,17 @@ use crate::{
     parser::token::{Span, TokenKind},
 };
 
-use super::token::Token;
+use super::{token::Token, cursor::Cursor};
 
 #[derive(Debug)]
 pub struct Scanner<'a> {
-    source: &'a str,
-    iter: Lookahead<2, CharIndices<'a>>,
-    start: usize,
-    end: usize,
+    cursor: Cursor<'a>,
 }
 
 impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Self {
         Self {
-            source,
-            iter: Lookahead::new(source.char_indices()),
-            start: 0,
-            end: 0,
+            cursor: Cursor::new(source),
         }
     }
 
