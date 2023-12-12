@@ -1,11 +1,6 @@
-use std::str::CharIndices;
+use crate::parser::token::{Span, TokenKind};
 
-use crate::{
-    lookahead::Lookahead,
-    parser::token::{Span, TokenKind},
-};
-
-use super::{token::Token, cursor::Cursor};
+use super::{cursor::Cursor, token::Token};
 
 #[derive(Debug)]
 pub struct Scanner<'a> {
