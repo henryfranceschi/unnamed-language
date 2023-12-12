@@ -167,25 +167,6 @@ impl<'a> Scanner<'a> {
 
         Ok(self.token(TokenKind::Number))
     }
-
-    fn is_at_end(&mut self) -> bool {
-        self.lookahead(0) == Self::EOF_CHAR
-    }
-
-    fn token(&mut self, kind: TokenKind) -> Token<'a> {
-        let token = Token::new(self.span(), kind);
-        self.start = self.end;
-
-        token
-    }
-
-    fn span(&self) -> Span<'a> {
-        Span::new(self.source, self.start, self.end)
-    }
-
-    fn error(&self, message: String) -> ScanError<'a> {
-        ScanError::new(message, self.span())
-    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
