@@ -124,43 +124,56 @@ impl<'a> Scanner<'a> {
         Ok(self.token(kind))
     }
 
-    fn identifier(&mut self) -> Result<Token<'a>, ScanError<'a>> {
-        self.advance_while(|c| c.is_ascii_alphanumeric() || c == '_');
+    fn identifier(&mut self) -> TokenKind {
+        while is_identifier_continue(self.cursor.lookahead(0)) {
+            self.cursor.advance();
+        }
 
-        Ok(self.token(
-            TokenKind::keyword_kind_from_str(self.current()).unwrap_or(TokenKind::Identifier),
-        ))
+        TokenKind::keyword_kind_from_str(self.cursor.span().slice())
+            .unwrap_or(TokenKind::Identifier)
     }
 
-    fn string(&mut self) -> Result<Token<'a>, ScanError<'a>> {
+    fn string(&mut self) -> Result<(), ScanError<'a>> {
         // Consume everything until we find a closing quote or we reach the end of the source.
-        self.advance_while(|c| c != '"');
+        while !self.cursor.is_at_end() && self.cursor.lookahead(0) != '"' {
+            self.cursor.advance();
+        }
 
-        if !self.advance_if_eq('"') {
-            Err(self.error("expected closing quotes".to_owned()))
+        if self.cursor.lookahead(0) != '"' {
+            let message = "expected closing quotes".to_owned();
+            Err(ScanError::new(message, self.cursor.reset_span()))
         } else {
-            Ok(self.token(TokenKind::String))
+            self.cursor.advance();
+            Ok(())
         }
     }
 
-    fn number(&mut self) -> Result<Token<'a>, ScanError<'a>> {
+    fn number(&mut self) {
         // Scan ingegral part.
-        self.advance_while(|c| c.is_ascii_digit());
+        while self.cursor.lookahead(0).is_ascii_digit() {
+            self.cursor.advance();
+        }
 
         // Scan optional fractional part.
         // Because we are able to call methods on values directly we only want to consume the dot
         // if it is followed by numeric characters. Otherwise we leave the characters to be
         // consumed as separate tokens.
-        if self.lookahead(0) == '.' && self.lookahead(1).is_ascii_digit() {
-            self.advance();
+        if self.cursor.lookahead(0) == '.' && self.cursor.lookahead(1).is_ascii_digit() {
+            self.cursor.advance();
 
-            while self.lookahead(0).is_ascii_digit() {
-                self.advance();
+            while self.cursor.lookahead(0).is_ascii_digit() {
+                self.cursor.advance();
             }
         }
-
-        Ok(self.token(TokenKind::Number))
     }
+}
+
+fn is_identifier_start(c: char) -> bool {
+    c.is_ascii_alphabetic() || c == '_'
+}
+
+fn is_identifier_continue(c: char) -> bool {
+    c.is_ascii_alphanumeric() || c == '_'
 }
 
 #[derive(Debug, PartialEq, Eq)]
