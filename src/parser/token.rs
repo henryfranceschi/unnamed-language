@@ -15,8 +15,8 @@ impl<'a> Token<'a> {
         &self.span
     }
 
-    pub fn kind(&self) -> &TokenKind {
-        &self.kind
+    pub fn kind(&self) -> TokenKind {
+        self.kind
     }
 
     pub fn is_eof(&self) -> bool {
@@ -111,7 +111,7 @@ pub enum TokenKind {
     SlashEqual,
     PercentEqual,
     EqualEqual,
-    NotEqual,
+    BangEqual,
     Less,
     LessEqual,
     GreaterEqual,
