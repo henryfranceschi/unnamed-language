@@ -1,4 +1,8 @@
-use std::{io::Write, path::Path};
+use std::{
+    fs::File,
+    io::{Write, Read},
+    path::Path,
+};
 
 use unnamed_language::parser::Parser;
 
@@ -39,7 +43,23 @@ fn repl() {
 }
 
 fn run_from_file(path: &Path) {
-    todo!()
+    if !path.is_file() {
+        eprintln!("error: file {:?} not found", path);
+        return;
+    }
+
+    let Ok(mut file) = File::open(path) else {
+        eprintln!("error: file {:?} could not be opened", path);
+        return;
+    };
+
+    let mut source = String::new();
+    if file.read_to_string(&mut source).is_err() {
+        eprintln!("error: file {:?} could not be read", path);
+        return;
+    }
+
+    run(source);
 }
 
 fn run(source: String) {
