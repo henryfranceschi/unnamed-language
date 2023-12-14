@@ -11,8 +11,8 @@ impl<'a> Token<'a> {
         Self { span, kind }
     }
 
-    pub fn span(&self) -> &Span {
-        &self.span
+    pub fn span(self) -> Span<'a> {
+        self.span
     }
 
     pub fn kind(&self) -> TokenKind {
@@ -63,7 +63,7 @@ impl<'a> Span<'a> {
             .add(1)
     }
 
-    pub fn slice(&self) -> &str {
+    pub fn slice(&self) -> &'a str {
         &self.source[self.start..self.end]
     }
 }

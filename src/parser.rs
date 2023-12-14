@@ -27,13 +27,13 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn peek(&mut self) -> &Token<'a> {
+    fn peek(&mut self) -> Token<'a> {
         if self.peeked.is_some() {
-            self.peeked.as_ref().unwrap()
+            self.peeked.unwrap()
         } else {
             let token = self.next_token();
             self.peeked.replace(token);
-            self.peeked.as_ref().unwrap()
+            token
         }
     }
 
@@ -78,9 +78,10 @@ impl<'a> Parser<'a> {
             _ => {
                 // The only remaining types of tokens valid in prefix position are those
                 // representing prefix operators.
-                if let Some(((), r_bp)) = Self::prefix_binding_power(&token) {
+                let operator: Operator = token.try_into()?;
+                if let Some(((), r_bp)) = operator.prefix_binding_power() {
                     Expr::Unary {
-                        operator: token.kind(),
+                        operator,
                         operand: Box::new(self.expr_bp(r_bp)?),
                     }
                 } else {
@@ -96,15 +97,16 @@ impl<'a> Parser<'a> {
                 break;
             }
 
-            if let Some((l_bp, r_bp)) = Self::infix_binding_power(token) {
+            let operator: Operator = token.try_into()?;
+            if let Some((l_bp, r_bp)) = operator.infix_binding_power() {
                 if l_bp < min_bp {
                     break;
                 }
 
-                let token = self.advance();
+                self.advance();
 
                 expr = Expr::Binary {
-                    operator: token.kind(),
+                    operator,
                     left_operand: Box::new(expr),
                     right_operand: Box::new(self.expr_bp(r_bp)?),
                 };
@@ -116,35 +118,6 @@ impl<'a> Parser<'a> {
         }
 
         Ok(expr)
-    }
-
-    fn prefix_binding_power(token: &Token) -> Option<((), u8)> {
-        use TokenKind::*;
-
-        let bp = match token.kind() {
-            Not => ((), 7),
-            Minus => ((), 19),
-            _ => return None,
-        };
-
-        Some(bp)
-    }
-
-    fn infix_binding_power(token: &Token) -> Option<(u8, u8)> {
-        use TokenKind::*;
-        let bp = match token.kind() {
-            Equal => (2, 1),
-            Or => (3, 4),
-            And => (5, 6),
-            EqualEqual | BangEqual => (9, 10),
-            Less | Greater | LessEqual | GreaterEqual => (11, 12),
-            Plus | Minus => (13, 14),
-            Star | Slash | Percent => (15, 16),
-            StarStar => (18, 17),
-            _ => return None,
-        };
-
-        Some(bp)
     }
 }
 
@@ -164,21 +137,129 @@ impl<'a> ParseError<'a> {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum Operator {
+    Assign,
+    Or,
+    And,
+    Not,
+    Eq,
+    Ne,
+    Lt,
+    Gt,
+    Le,
+    Ge,
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+    Exp,
+}
+
+impl Operator {
+    fn is_prefix(self) -> bool {
+        use Operator::*;
+
+        matches!(self, Not | Sub)
+    }
+
+    fn is_infix(self) -> bool {
+        use Operator::*;
+
+        matches!(
+            self,
+            Assign | Or | And | Eq | Ne | Lt | Gt | Le | Ge | Add | Sub | Mul | Div | Mod | Exp
+        )
+    }
+
+    fn prefix_binding_power(self) -> Option<((), u8)> {
+        use Operator::*;
+
+        let bp = match self {
+            Not => ((), 7),
+            Sub => ((), 19),
+            _ => return None,
+        };
+
+        Some(bp)
+    }
+
+    fn infix_binding_power(self) -> Option<(u8, u8)> {
+        use Operator::*;
+
+        let bp = match self {
+            Assign => (2, 1),
+            Or => (3, 4),
+            And => (5, 6),
+            Eq | Ne => (9, 10),
+            Lt | Gt | Le | Ge => (11, 12),
+            Add | Sub => (13, 14),
+            Mul | Div | Mod => (15, 16),
+            Exp => (18, 17),
+            _ => return None,
+        };
+
+        Some(bp)
+    }
+}
+
+impl<'a> TryFrom<Token<'a>> for Operator {
+    type Error = ParseError<'a>;
+
+    fn try_from(token: Token<'a>) -> Result<Self, Self::Error> {
+        let op = match token.kind() {
+            TokenKind::Equal => Self::Assign,
+            TokenKind::Or => Self::Or,
+            TokenKind::And => Self::And,
+            TokenKind::Not => Self::Not,
+            TokenKind::EqualEqual => Self::Eq,
+            TokenKind::BangEqual => Self::Ne,
+            TokenKind::Less => Self::Lt,
+            TokenKind::Greater => Self::Gt,
+            TokenKind::LessEqual => Self::Le,
+            TokenKind::GreaterEqual => Self::Ge,
+            TokenKind::Plus => Self::Add,
+            TokenKind::Minus => Self::Sub,
+            TokenKind::Star => Self::Mul,
+            TokenKind::Slash => Self::Div,
+            TokenKind::Percent => Self::Mod,
+            TokenKind::StarStar => Self::Exp,
+            _ => {
+                let message = format!("unexpected token: {:?}", token);
+                return Err(ParseError {
+                    span: token.span(),
+                    message,
+                });
+            }
+        };
+
+        Ok(op)
+    }
+}
+
 #[derive(Debug)]
 pub enum Expr {
     Identifier(String),
     String(String),
     Number(f64),
     Binary {
-        operator: TokenKind,
+        operator: Operator,
         left_operand: Box<Expr>,
         right_operand: Box<Expr>,
     },
     Unary {
-        operator: TokenKind,
+        operator: Operator,
         operand: Box<Expr>,
     },
 }
+
+impl Expr {
+    fn binary(operator: Operator, left_operand: Box<Expr>, right_operand: Box<Expr>) -> Expr {
+        Expr::Binary {
+            operator,
+            left_operand,
+            right_operand,
         }
     }
 }
