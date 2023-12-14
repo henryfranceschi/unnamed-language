@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{io::Write, path::Path};
 
 use unnamed_language::parser::Parser;
 
@@ -17,7 +17,25 @@ fn main() {
 }
 
 fn repl() {
-    todo!()
+    loop {
+        print!("> ");
+        if let Err(error) = std::io::stdout().flush() {
+            eprintln!("error: {error}");
+            return;
+        }
+
+        let mut buf = String::new();
+        match std::io::stdin().read_line(&mut buf) {
+            Ok(0) => {
+                println!("exiting...");
+                break;
+            }
+            Ok(_) => {
+                run(buf);
+            }
+            Err(error) => eprintln!("error: {error}"),
+        }
+    }
 }
 
 fn run_from_file(path: &Path) {
@@ -25,5 +43,13 @@ fn run_from_file(path: &Path) {
 }
 
 fn run(source: String) {
-    Parser::new(&source);
+    let mut parser = Parser::new(&source);
+    match parser.expr() {
+        Ok(expr) => {
+            dbg!(expr);
+        }
+        Err(error) => {
+            eprintln!("parsing error: {}", error.message());
+        }
+    }
 }
