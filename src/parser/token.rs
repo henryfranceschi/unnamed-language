@@ -1,6 +1,6 @@
 use std::ops::Add;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Token<'a> {
     span: Span<'a>,
     kind: TokenKind,
@@ -24,7 +24,7 @@ impl<'a> Token<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Span<'a> {
     source: &'a str,
     /// Start index of the token.
