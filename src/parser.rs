@@ -1,8 +1,10 @@
 use self::{
+    ast::{Expr, Operator},
     scanner::Scanner,
     token::{Span, Token, TokenKind},
 };
 
+pub mod ast;
 mod cursor;
 pub mod scanner;
 pub mod token;
@@ -80,10 +82,7 @@ impl<'a> Parser<'a> {
                 // representing prefix operators.
                 let operator: Operator = token.try_into()?;
                 if let Some(((), r_bp)) = operator.prefix_binding_power() {
-                    Expr::Unary {
-                        operator,
-                        operand: Box::new(self.expr_bp(r_bp)?),
-                    }
+                    Expr::Unary(operator, Box::new(self.expr_bp(r_bp)?))
                 } else {
                     // Unexpected token.
                     todo!("error reporting");
@@ -105,11 +104,7 @@ impl<'a> Parser<'a> {
 
                 self.advance();
 
-                expr = Expr::Binary {
-                    operator,
-                    left_operand: Box::new(expr),
-                    right_operand: Box::new(self.expr_bp(r_bp)?),
-                };
+                expr = Expr::Binary(operator, Box::new(expr), Box::new(self.expr_bp(r_bp)?));
 
                 continue;
             }
@@ -134,73 +129,6 @@ impl<'a> ParseError<'a> {
 
     pub fn message(&self) -> &str {
         &self.message
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum Operator {
-    Assign,
-    Or,
-    And,
-    Not,
-    Eq,
-    Ne,
-    Lt,
-    Gt,
-    Le,
-    Ge,
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Mod,
-    Exp,
-}
-
-impl Operator {
-    fn is_prefix(self) -> bool {
-        use Operator::*;
-
-        matches!(self, Not | Sub)
-    }
-
-    fn is_infix(self) -> bool {
-        use Operator::*;
-
-        matches!(
-            self,
-            Assign | Or | And | Eq | Ne | Lt | Gt | Le | Ge | Add | Sub | Mul | Div | Mod | Exp
-        )
-    }
-
-    fn prefix_binding_power(self) -> Option<((), u8)> {
-        use Operator::*;
-
-        let bp = match self {
-            Not => ((), 7),
-            Sub => ((), 19),
-            _ => return None,
-        };
-
-        Some(bp)
-    }
-
-    fn infix_binding_power(self) -> Option<(u8, u8)> {
-        use Operator::*;
-
-        let bp = match self {
-            Assign => (2, 1),
-            Or => (3, 4),
-            And => (5, 6),
-            Eq | Ne => (9, 10),
-            Lt | Gt | Le | Ge => (11, 12),
-            Add | Sub => (13, 14),
-            Mul | Div | Mod => (15, 16),
-            Exp => (18, 17),
-            _ => return None,
-        };
-
-        Some(bp)
     }
 }
 
@@ -235,31 +163,5 @@ impl<'a> TryFrom<Token<'a>> for Operator {
         };
 
         Ok(op)
-    }
-}
-
-#[derive(Debug)]
-pub enum Expr {
-    Identifier(String),
-    String(String),
-    Number(f64),
-    Binary {
-        operator: Operator,
-        left_operand: Box<Expr>,
-        right_operand: Box<Expr>,
-    },
-    Unary {
-        operator: Operator,
-        operand: Box<Expr>,
-    },
-}
-
-impl Expr {
-    fn binary(operator: Operator, left_operand: Box<Expr>, right_operand: Box<Expr>) -> Expr {
-        Expr::Binary {
-            operator,
-            left_operand,
-            right_operand,
-        }
     }
 }
