@@ -1,4 +1,10 @@
 #[derive(Debug)]
+pub enum Stmt {
+    Block(Vec<Stmt>),
+    Expr(Box<Expr>),
+}
+
+#[derive(Debug)]
 pub enum Expr {
     Identifier(String),
     String(String),
