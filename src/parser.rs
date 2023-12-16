@@ -91,21 +91,21 @@ impl<'a> Parser<'a> {
         };
 
         loop {
-            let token = self.peek();
-            if token.is_eof() {
+            // We only continue if the peeked token is a valid operator.
+            let Ok(operator): Result<Operator, _> = self.peek().try_into() else {
                 break;
-            }
+            };
 
-            let operator: Operator = token.try_into()?;
+            // Handle infix case.
             if let Some((l_bp, r_bp)) = operator.infix_binding_power() {
                 if l_bp < min_bp {
                     break;
                 }
 
+                // We only advance if the peeked token is a valid infix operator, otherwise we
+                // leave the token to be handled elsewhere.
                 self.advance();
-
                 expr = Expr::Binary(operator, Box::new(expr), Box::new(self.expr_bp(r_bp)?));
-
                 continue;
             }
 
