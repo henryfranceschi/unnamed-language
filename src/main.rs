@@ -64,9 +64,9 @@ fn run_from_file(path: &Path) {
 
 fn run(source: String) {
     let mut parser = Parser::new(&source);
-    match parser.expr() {
-        Ok(expr) => {
-            dbg!(expr);
+    match parser.parse() {
+        Ok(stmt) => {
+            dbg!(stmt);
         }
         Err(error) => {
             eprintln!("parsing error: {}", error.message());

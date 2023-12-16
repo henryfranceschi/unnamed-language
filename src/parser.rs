@@ -1,5 +1,5 @@
 use self::{
-    ast::{Expr, Operator},
+    ast::{Expr, Operator, Stmt},
     scanner::Scanner,
     token::{Span, Token, TokenKind},
 };
@@ -50,7 +50,57 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn expr(&mut self) -> Result<Expr, ParseError<'a>> {
+    /// Advances if next token equals `expected`, otherwise returns `ParseError`
+    fn expect(&mut self, expected: TokenKind) -> Result<(), ParseError<'a>> {
+        let token = self.peek();
+        if token.kind() == expected {
+            self.advance();
+            Ok(())
+        } else {
+            Err(ParseError::new(&token, format!("expected '{:?}'", expected)))
+        }
+    }
+
+    pub fn parse(&mut self) -> Result<Stmt, ParseError<'a>> {
+        self.stmt()
+    }
+
+    fn stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
+        if self.peek().kind() == TokenKind::LBrace {
+            self.block_stmt()
+        } else {
+            self.expr_stmt()
+        }
+    }
+
+    fn block_stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
+        self.expect(TokenKind::LBrace)?;
+
+        let mut statments = vec![];
+        loop {
+            let token = self.peek();
+            if matches!(token.kind(), TokenKind::Eof | TokenKind::RBrace) {
+                break;
+            }
+
+            statments.push(self.stmt()?);
+        }
+
+        self.expect(TokenKind::RBrace)?;
+
+        Ok(Stmt::Block(statments))
+    }
+
+    fn expr_stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
+        let expr = self.expr()?;
+
+        // Consume semicolon.
+        self.expect(TokenKind::Semicolon)?;
+
+        Ok(Stmt::Expr(Box::new(expr)))
+    }
+
+    fn expr(&mut self) -> Result<Expr, ParseError<'a>> {
         self.expr_bp(0)
     }
 
@@ -71,10 +121,7 @@ impl<'a> Parser<'a> {
             // Grouping
             TokenKind::LParen => {
                 let expr = self.expr_bp(0)?;
-                if self.advance().kind() != TokenKind::RParen {
-                    todo!("error reporting");
-                }
-
+                self.expect(TokenKind::RParen)?;
                 expr
             }
             _ => {
