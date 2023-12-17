@@ -1,4 +1,4 @@
-use std::ops::Add;
+use std::{fmt::Display, ops::Add};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Token<'a> {
@@ -142,6 +142,69 @@ impl TokenKind {
         };
 
         Some(kind)
+    }
+
+    pub fn is_variable_length(self) -> bool {
+        matches!(
+            self,
+            TokenKind::Identifier | TokenKind::String | TokenKind::Number
+        )
+    }
+}
+
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            TokenKind::LParen => "(",
+            TokenKind::RParen => ")",
+            TokenKind::LBrack => "[",
+            TokenKind::RBrack => "]",
+            TokenKind::LBrace => "{",
+            TokenKind::RBrace => "}",
+            TokenKind::Period => ".",
+            TokenKind::Semicolon => ";",
+            TokenKind::Comma => ",",
+            TokenKind::Identifier => "<idenifier>",
+            TokenKind::Let => "let",
+            TokenKind::Mut => "mut",
+            TokenKind::Func => "func",
+            TokenKind::Class => "class",
+            TokenKind::Not => "not",
+            TokenKind::Or => "or",
+            TokenKind::And => "and",
+            TokenKind::For => "for",
+            TokenKind::While => "while",
+            TokenKind::If => "if",
+            TokenKind::Else => "else",
+            TokenKind::Return => "return",
+            TokenKind::This => "this",
+            TokenKind::True => "true",
+            TokenKind::False => "false",
+            TokenKind::Nil => "nil",
+            TokenKind::String => "<string>",
+            TokenKind::Number => "<number>",
+            TokenKind::StarStar => "**",
+            TokenKind::Star => "*",
+            TokenKind::Slash => "/",
+            TokenKind::Percent => "%",
+            TokenKind::Plus => "+",
+            TokenKind::Minus => "-",
+            TokenKind::Equal => "=",
+            TokenKind::PlusEqual => "+=",
+            TokenKind::MinusEqual => "-=",
+            TokenKind::StarEqual => "*=",
+            TokenKind::SlashEqual => "/=",
+            TokenKind::PercentEqual => "%=",
+            TokenKind::EqualEqual => "==",
+            TokenKind::BangEqual => "!=",
+            TokenKind::Less => "<",
+            TokenKind::LessEqual => "<=",
+            TokenKind::GreaterEqual => ">=",
+            TokenKind::Greater => ">",
+            TokenKind::Eof => "<eof>",
+        };
+
+        f.write_str(s)
     }
 }
 

@@ -50,14 +50,20 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// Advances if next token equals `expected`, otherwise returns `ParseError`
+    /// Advances if next token equals `expected`, otherwise returns `ParseError`.
     fn expect(&mut self, expected: TokenKind) -> Result<(), ParseError<'a>> {
         let token = self.peek();
         if token.kind() == expected {
             self.advance();
             Ok(())
         } else {
-            Err(ParseError::new(&token, format!("expected '{:?}'", expected)))
+            let message = if expected.is_variable_length() || expected == TokenKind::Eof {
+                format!("expected {}", expected)
+            } else {
+                format!("expected '{}'", expected)
+            };
+
+            Err(ParseError::new(&token, message))
         }
     }
 
