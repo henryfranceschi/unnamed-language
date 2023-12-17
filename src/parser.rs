@@ -30,12 +30,13 @@ impl<'a> Parser<'a> {
     }
 
     fn peek(&mut self) -> Token<'a> {
-        if self.peeked.is_some() {
-            self.peeked.unwrap()
-        } else {
-            let token = self.next_token();
-            self.peeked.replace(token);
-            token
+        match self.peeked {
+            Some(token) => token,
+            None => {
+                let token = self.next_token();
+                self.peeked.replace(token);
+                token
+            }
         }
     }
 
@@ -115,14 +116,19 @@ impl<'a> Parser<'a> {
         let mut expr = match token.kind() {
             TokenKind::Identifier => Expr::Identifier(token.span().slice().to_owned()),
             TokenKind::Number => {
-                let slice = token.span().slice();
-                let number: f64 = slice.parse().unwrap();
+                let Ok(number) = token.span().slice().parse() else {
+                    return Err(ParseError::new(
+                        &token,
+                        "failed to parse numeric literal".to_owned(),
+                    ));
+                };
+
                 Expr::Number(number)
             }
             TokenKind::String => {
-                let span = token.span().slice();
+                let slice = token.span().slice();
                 // For now we just remove the surrounding quotes.
-                Expr::String(span[1..span.len() - 1].to_owned())
+                Expr::String(slice[1..slice.len() - 1].to_owned())
             }
             // Grouping
             TokenKind::LParen => {
@@ -176,6 +182,13 @@ pub struct ParseError<'a> {
 }
 
 impl<'a> ParseError<'a> {
+    pub fn new(token: &Token<'a>, message: String) -> Self {
+        Self {
+            span: token.span(),
+            message,
+        }
+    }
+
     pub fn span(&self) -> Span<'a> {
         self.span
     }
