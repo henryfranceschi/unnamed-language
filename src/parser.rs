@@ -136,6 +136,7 @@ impl<'a> Parser<'a> {
             }
             TokenKind::False => Expr::Literal(Value::Bool(false)),
             TokenKind::True => Expr::Literal(Value::Bool(true)),
+            TokenKind::Nil => Expr::Literal(Value::Nil),
             // Grouping
             TokenKind::LParen => {
                 let expr = self.expr_bp(0)?;
