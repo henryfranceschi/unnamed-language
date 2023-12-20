@@ -34,6 +34,24 @@ impl Interpreter {
     fn interpret_expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         match expr {
             Expr::Literal(val) => Ok(*val),
+            Expr::Binary(Operator::Or, left, right) => {
+                let left = self.interpret_expr(left)?;
+                if is_truthy(&left) {
+                    Ok(left)
+                } else {
+                    let right = self.interpret_expr(right)?;
+                    Ok(right)
+                }
+            }
+            Expr::Binary(Operator::And, left, right) => {
+                let left = self.interpret_expr(left)?;
+                if !is_truthy(&left) {
+                    Ok(left)
+                } else {
+                    let right = self.interpret_expr(right)?;
+                    Ok(right)
+                }
+            }
             Expr::Binary(op, left, right) => {
                 let left = self.interpret_expr(left)?;
                 let right = self.interpret_expr(right)?;
@@ -106,6 +124,14 @@ pub fn check_number_operands(a: &Value, b: &Value) -> Result<(f64, f64), Runtime
         Ok((*a, *b))
     } else {
         Err(RuntimeError::InvalidOperand)
+    }
+}
+
+pub fn is_truthy(a: &Value) -> bool {
+    match *a {
+        Value::Number(_) => true,
+        Value::Bool(b) => b,
+        Value::Nil => false,
     }
 }
 
