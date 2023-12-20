@@ -6,9 +6,8 @@ pub enum Stmt {
 
 #[derive(Debug)]
 pub enum Expr {
+    Literal(Value),
     Identifier(String),
-    String(String),
-    Number(f64),
     Binary(Operator, Box<Expr>, Box<Expr>),
     Unary(Operator, Box<Expr>),
 }

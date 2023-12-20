@@ -4,7 +4,7 @@ use crate::parser::ast::{Expr, Operator, Stmt};
 
 use self::value::Value;
 
-mod value;
+pub mod value;
 
 /// Basic treewalk interpreter, will be replaced later by something more efficient.
 #[derive(Debug, Default)]
@@ -20,17 +20,20 @@ impl Interpreter {
                     self.interpret_stmt(stmt);
                 }
             }
-            Stmt::Expr(expr) => {
-                if let Err(err) = self.interpret_expr(expr) {
+            Stmt::Expr(expr) => match self.interpret_expr(expr) {
+                Ok(value) => {
+                    println!("value: {:?}", value);
+                }
+                Err(err) => {
                     eprintln!("runtime error: {}", err.message());
                 }
-            }
+            },
         };
     }
 
     fn interpret_expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         match expr {
-            Expr::Number(val) => Ok(Value::Number(*val)),
+            Expr::Literal(val) => Ok(*val),
             Expr::Binary(op, left, right) => {
                 let left = self.interpret_expr(left)?;
                 let right = self.interpret_expr(right)?;

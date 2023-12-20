@@ -1,3 +1,5 @@
+use crate::interpreter::value::Value;
+
 use self::{
     ast::{Expr, Operator, Stmt},
     scanner::Scanner,
@@ -123,13 +125,17 @@ impl<'a> Parser<'a> {
                     ));
                 };
 
-                Expr::Number(number)
+                Expr::Literal(Value::Number(number))
             }
             TokenKind::String => {
                 let slice = token.span().slice();
                 // For now we just remove the surrounding quotes.
-                Expr::String(slice[1..slice.len() - 1].to_owned())
+                // Expr::String(slice[1..slice.len() - 1].to_owned())
+
+                todo!()
             }
+            TokenKind::False => Expr::Literal(Value::Bool(false)),
+            TokenKind::True => Expr::Literal(Value::Bool(true)),
             // Grouping
             TokenKind::LParen => {
                 let expr = self.expr_bp(0)?;
