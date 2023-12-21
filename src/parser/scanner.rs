@@ -67,9 +67,13 @@ impl<'a> Scanner<'a> {
                 self.cursor.advance();
                 TokenKind::EqualEqual
             }
+            ('!', '=') => {
+                self.cursor.advance();
+                TokenKind::BangEqual
+            }
             ('<', '=') => {
                 self.cursor.advance();
-                TokenKind::GreaterEqual
+                TokenKind::LessEqual
             }
             ('>', '=') => {
                 self.cursor.advance();
@@ -81,7 +85,7 @@ impl<'a> Scanner<'a> {
             ('/', _) => TokenKind::Slash,
             ('%', _) => TokenKind::Percent,
             ('=', _) => TokenKind::Equal,
-            ('<', _) => TokenKind::Greater,
+            ('<', _) => TokenKind::Less,
             ('>', _) => TokenKind::Greater,
 
             (Cursor::EOF_CHAR, _) => TokenKind::Eof,
