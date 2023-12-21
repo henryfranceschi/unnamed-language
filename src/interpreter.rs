@@ -36,7 +36,7 @@ impl Interpreter {
             Expr::Literal(val) => Ok(*val),
             Expr::Binary(Operator::Or, left, right) => {
                 let left = self.interpret_expr(left)?;
-                if is_truthy(&left) {
+                if left.is_truthy() {
                     Ok(left)
                 } else {
                     let right = self.interpret_expr(right)?;
@@ -45,7 +45,7 @@ impl Interpreter {
             }
             Expr::Binary(Operator::And, left, right) => {
                 let left = self.interpret_expr(left)?;
-                if !is_truthy(&left) {
+                if !left.is_truthy() {
                     Ok(left)
                 } else {
                     let right = self.interpret_expr(right)?;
@@ -57,6 +57,24 @@ impl Interpreter {
                 let right = self.interpret_expr(right)?;
 
                 let value = match op {
+                    Operator::Eq => Value::Bool(left == right),
+                    Operator::Ne => Value::Bool(left != right),
+                    Operator::Lt => {
+                        let (left, right) = check_number_operands(&left, &right)?;
+                        Value::Bool(left < right)
+                    }
+                    Operator::Gt => {
+                        let (left, right) = check_number_operands(&left, &right)?;
+                        Value::Bool(left > right)
+                    }
+                    Operator::Le => {
+                        let (left, right) = check_number_operands(&left, &right)?;
+                        Value::Bool(left <= right)
+                    }
+                    Operator::Ge => {
+                        let (left, right) = check_number_operands(&left, &right)?;
+                        Value::Bool(left >= right)
+                    }
                     Operator::Add => {
                         let (left, right) = check_number_operands(&left, &right)?;
                         Value::Number(left + right)
@@ -124,14 +142,6 @@ pub fn check_number_operands(a: &Value, b: &Value) -> Result<(f64, f64), Runtime
         Ok((*a, *b))
     } else {
         Err(RuntimeError::InvalidOperand)
-    }
-}
-
-pub fn is_truthy(a: &Value) -> bool {
-    match *a {
-        Value::Number(_) => true,
-        Value::Bool(b) => b,
-        Value::Nil => false,
     }
 }
 
