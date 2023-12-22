@@ -75,8 +75,11 @@ impl<'a> Parser<'a> {
     }
 
     fn stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
-        if self.peek().kind() == TokenKind::LBrace {
+        let kind = self.peek().kind();
+        if kind == TokenKind::LBrace {
             self.block_stmt()
+        } else if kind == TokenKind::Let {
+            self.var_decl()
         } else {
             self.expr_stmt()
         }
@@ -110,14 +113,20 @@ impl<'a> Parser<'a> {
     }
 
     fn var_decl(&mut self) -> Result<Stmt, ParseError<'a>> {
+        self.expect(TokenKind::Let)?;
+
         let token = self.advance();
         let name = token.span().slice().to_owned();
 
         let init_expr = if self.peek().kind() == TokenKind::Equal {
+            self.advance();
             Some(Box::new(self.expr()?))
         } else {
             None
         };
+
+        // Consume semicolon.
+        self.expect(TokenKind::Semicolon)?;
 
         Ok(Stmt::VarDecl(name, init_expr))
     }
