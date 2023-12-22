@@ -109,6 +109,19 @@ impl<'a> Parser<'a> {
         Ok(Stmt::Expr(Box::new(expr)))
     }
 
+    fn var_decl(&mut self) -> Result<Stmt, ParseError<'a>> {
+        let token = self.advance();
+        let name = token.span().slice().to_owned();
+
+        let init_expr = if self.peek().kind() == TokenKind::Equal {
+            Some(Box::new(self.expr()?))
+        } else {
+            None
+        };
+
+        Ok(Stmt::VarDecl(name, init_expr))
+    }
+
     fn expr(&mut self) -> Result<Expr, ParseError<'a>> {
         self.expr_bp(0)
     }

@@ -2,6 +2,7 @@
 pub enum Stmt {
     Block(Vec<Stmt>),
     Expr(Box<Expr>),
+    VarDecl(String, Option<Box<Expr>>),
 }
 
 #[derive(Debug)]
