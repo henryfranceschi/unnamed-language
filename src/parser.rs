@@ -31,6 +31,15 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn advance_if(&mut self, kind: TokenKind) -> bool {
+        if self.peek().kind() == kind {
+            self.advance();
+            true
+        } else {
+            false
+        }
+    }
+
     fn peek(&mut self) -> Token<'a> {
         match self.peeked {
             Some(token) => token,
@@ -56,8 +65,7 @@ impl<'a> Parser<'a> {
     /// Advances if next token equals `expected`, otherwise returns `ParseError`.
     fn expect(&mut self, expected: TokenKind) -> Result<(), ParseError<'a>> {
         let token = self.peek();
-        if token.kind() == expected {
-            self.advance();
+        if self.advance_if(expected) {
             Ok(())
         } else {
             let message = if expected.is_variable_length() || expected == TokenKind::Eof {
@@ -90,8 +98,7 @@ impl<'a> Parser<'a> {
 
         let mut statments = vec![];
         loop {
-            let token = self.peek();
-            if matches!(token.kind(), TokenKind::Eof | TokenKind::RBrace) {
+            if matches!(self.peek().kind(), TokenKind::Eof | TokenKind::RBrace) {
                 break;
             }
 
@@ -106,7 +113,6 @@ impl<'a> Parser<'a> {
     fn expr_stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
         let expr = self.expr()?;
 
-        // Consume semicolon.
         self.expect(TokenKind::Semicolon)?;
 
         Ok(Stmt::Expr(Box::new(expr)))
@@ -115,17 +121,13 @@ impl<'a> Parser<'a> {
     fn var_decl(&mut self) -> Result<Stmt, ParseError<'a>> {
         self.expect(TokenKind::Let)?;
 
-        let token = self.advance();
-        let name = token.span().slice().to_owned();
-
-        let init_expr = if self.peek().kind() == TokenKind::Equal {
-            self.advance();
+        let name = self.advance().span().slice().to_owned();
+        let init_expr = if self.advance_if(TokenKind::Equal) {
             Some(Box::new(self.expr()?))
         } else {
             None
         };
 
-        // Consume semicolon.
         self.expect(TokenKind::Semicolon)?;
 
         Ok(Stmt::VarDecl(name, init_expr))
@@ -140,29 +142,17 @@ impl<'a> Parser<'a> {
         let mut expr = match token.kind() {
             TokenKind::Identifier => {
                 let ident = Expr::Identifier(token.span().slice().to_owned());
-                if min_bp == 0 && self.peek().kind() == TokenKind::Equal {
-                    self.advance();
+                if min_bp == 0 && self.advance_if(TokenKind::Equal) {
                     Expr::Assignment(Box::new(ident), Box::new(self.expr()?))
                 } else {
                     ident
                 }
             }
             TokenKind::Number => {
-                let Ok(number) = token.span().slice().parse() else {
-                    return Err(ParseError::new(
-                        &token,
-                        "failed to parse numeric literal".to_owned(),
-                    ));
-                };
-
-                Expr::Literal(Value::Number(number))
+                Expr::Literal(Value::Number(token.span().slice().parse().unwrap()))
             }
             TokenKind::String => {
-                let slice = token.span().slice();
-                // For now we just remove the surrounding quotes.
-                // Expr::String(slice[1..slice.len() - 1].to_owned())
-
-                todo!()
+                todo!();
             }
             TokenKind::False => Expr::Literal(Value::Bool(false)),
             TokenKind::True => Expr::Literal(Value::Bool(true)),
