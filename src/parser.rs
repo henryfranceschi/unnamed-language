@@ -140,14 +140,7 @@ impl<'a> Parser<'a> {
     fn expr_bp(&mut self, min_bp: u8) -> Result<Expr, ParseError<'a>> {
         let token = self.advance();
         let mut expr = match token.kind() {
-            TokenKind::Identifier => {
-                let ident = Expr::Identifier(token.span().slice().to_owned());
-                if min_bp == 0 && self.advance_if(TokenKind::Equal) {
-                    Expr::Assignment(Box::new(ident), Box::new(self.expr()?))
-                } else {
-                    ident
-                }
-            }
+            TokenKind::Identifier => Expr::Identifier(token.span().slice().to_owned()),
             TokenKind::Number => {
                 Expr::Literal(Value::Number(token.span().slice().parse().unwrap()))
             }
@@ -188,11 +181,16 @@ impl<'a> Parser<'a> {
                     break;
                 }
 
-                // We only advance if the peeked token is a valid infix operator, otherwise we
-                // leave the token to be handled elsewhere.
-                self.advance();
-                expr = Expr::Binary(operator, Box::new(expr), Box::new(self.expr_bp(r_bp)?));
-                continue;
+                if min_bp == 0 && operator == Operator::Assign {
+                    self.advance();
+                    expr = Expr::Assignment(Box::new(expr), Box::new(self.expr()?))
+                } else {
+                    // We only advance if the peeked token is a valid infix operator, otherwise we
+                    // leave the token to be handled elsewhere.
+                    self.advance();
+                    expr = Expr::Binary(operator, Box::new(expr), Box::new(self.expr_bp(r_bp)?));
+                    continue;
+                }
             }
 
             break;
