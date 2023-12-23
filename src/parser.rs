@@ -139,12 +139,12 @@ impl<'a> Parser<'a> {
         let token = self.advance();
         let mut expr = match token.kind() {
             TokenKind::Identifier => {
-                let s = token.span().slice().to_owned();
+                let ident = Expr::Identifier(token.span().slice().to_owned());
                 if min_bp == 0 && self.peek().kind() == TokenKind::Equal {
                     self.advance();
-                    Expr::Assign(s, Box::new(self.expr()?))
+                    Expr::Assignment(Box::new(ident), Box::new(self.expr()?))
                 } else {
-                    Expr::Identifier(s)
+                    ident
                 }
             }
             TokenKind::Number => {

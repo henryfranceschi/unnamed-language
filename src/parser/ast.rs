@@ -9,7 +9,8 @@ pub enum Stmt {
 pub enum Expr {
     Literal(Value),
     Identifier(String),
-    Assign(String, Box<Expr>),
+    /// Currently the only valid value for `0` is `Identifier`.
+    Assignment(Box<Expr>, Box<Expr>),
     Binary(Operator, Box<Expr>, Box<Expr>),
     Unary(Operator, Box<Expr>),
 }
