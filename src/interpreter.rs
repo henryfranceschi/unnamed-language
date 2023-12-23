@@ -28,12 +28,50 @@ impl Interpreter {
                     eprintln!("runtime error: {}", err.message());
                 }
             },
+            Stmt::VarDecl(name, init_expr) => {
+                let value = if let Some(init_expr) = init_expr {
+                    match self.interpret_expr(init_expr) {
+                        Ok(value) => {
+                            println!("value: {:?}", value);
+                            value
+                        }
+                        Err(err) => {
+                            eprintln!("runtime error: {}", err.message());
+                            return;
+                        }
+                    }
+                } else {
+                    Value::Nil
+                };
+
+                self.globals.insert(name.to_owned(), value);
+            }
         };
     }
 
     fn interpret_expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         match expr {
             Expr::Literal(val) => Ok(*val),
+            Expr::Identifier(name) => {
+                if let Some(value) = self.globals.get(name) {
+                    Ok(*value)
+                } else {
+                    Err(RuntimeError::UndefinedVariable)
+                }
+            }
+            Expr::Assignment(target, expr) => {
+                let right = self.interpret_expr(expr)?;
+                if let Expr::Identifier(name) = target.as_ref() {
+                    if self.globals.contains_key(name) {
+                        self.globals.insert(name.to_owned(), right);
+                        Ok(right)
+                    } else {
+                        Err(RuntimeError::UndefinedVariable)
+                    }
+                } else {
+                    unimplemented!()
+                }
+            }
             Expr::Binary(Operator::Or, left, right) => {
                 let left = self.interpret_expr(left)?;
                 if left.is_truthy() {
@@ -105,7 +143,7 @@ impl Interpreter {
                         let (left, right) = check_number_operands(&left, &right)?;
                         Value::Number(left.powf(right))
                     }
-                    _ => todo!(),
+                    _ => unreachable!(),
                 };
 
                 Ok(value)
@@ -151,6 +189,7 @@ pub fn check_number_operands(a: &Value, b: &Value) -> Result<(f64, f64), Runtime
 pub enum RuntimeError {
     InvalidOperand,
     DivisionByZero,
+    UndefinedVariable,
 }
 
 impl RuntimeError {
@@ -158,6 +197,7 @@ impl RuntimeError {
         match self {
             RuntimeError::InvalidOperand => "unsupported operand type",
             RuntimeError::DivisionByZero => "division by zero is undefined",
+            RuntimeError::UndefinedVariable => "variable is not defined",
         }
     }
 }
