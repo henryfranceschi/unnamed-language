@@ -9,6 +9,7 @@ pub enum Stmt {
 pub enum Expr {
     Literal(Value),
     Identifier(String),
+    Assign(String, Box<Expr>),
     Binary(Operator, Box<Expr>, Box<Expr>),
     Unary(Operator, Box<Expr>),
 }

@@ -138,7 +138,15 @@ impl<'a> Parser<'a> {
     fn expr_bp(&mut self, min_bp: u8) -> Result<Expr, ParseError<'a>> {
         let token = self.advance();
         let mut expr = match token.kind() {
-            TokenKind::Identifier => Expr::Identifier(token.span().slice().to_owned()),
+            TokenKind::Identifier => {
+                let s = token.span().slice().to_owned();
+                if min_bp == 0 && self.peek().kind() == TokenKind::Equal {
+                    self.advance();
+                    Expr::Assign(s, Box::new(self.expr()?))
+                } else {
+                    Expr::Identifier(s)
+                }
+            }
             TokenKind::Number => {
                 let Ok(number) = token.span().slice().parse() else {
                     return Err(ParseError::new(
@@ -198,6 +206,10 @@ impl<'a> Parser<'a> {
             }
 
             break;
+        }
+
+        if self.peek().kind() == TokenKind::Equal {
+            todo!("invalid assignment target");
         }
 
         Ok(expr)
