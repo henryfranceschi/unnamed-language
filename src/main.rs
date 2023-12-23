@@ -1,10 +1,10 @@
 use std::{
     fs::File,
-    io::{Write, Read},
+    io::{Read, Write},
     path::Path,
 };
 
-use unnamed_language::parser::Parser;
+use unnamed_language::{interpreter::Interpreter, parser::Parser};
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -21,6 +21,7 @@ fn main() {
 }
 
 fn repl() {
+    let interpreter = &mut Interpreter::default();
     loop {
         print!("> ");
         if let Err(error) = std::io::stdout().flush() {
@@ -35,7 +36,7 @@ fn repl() {
                 break;
             }
             Ok(_) => {
-                run(buf);
+                run(buf, interpreter);
             }
             Err(error) => eprintln!("error: {error}"),
         }
@@ -59,14 +60,15 @@ fn run_from_file(path: &Path) {
         return;
     }
 
-    run(source);
+    run(source, &mut Interpreter::default());
 }
 
-fn run(source: String) {
+fn run(source: String, interpreter: &mut Interpreter) {
     let mut parser = Parser::new(&source);
     match parser.parse() {
         Ok(stmt) => {
-            dbg!(stmt);
+            println!("ast: {:?}", stmt);
+            interpreter.interpret_stmt(&stmt);
         }
         Err(error) => {
             eprintln!("parsing error: {}", error.message());
