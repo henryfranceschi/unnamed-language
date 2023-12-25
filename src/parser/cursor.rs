@@ -2,6 +2,8 @@ use std::str::Chars;
 
 use super::token::Span;
 
+/// `Cursor` iterates over its `input` string, it keeps a `start_index` which is the begining of the
+/// current span in the input.
 #[derive(Debug)]
 pub struct Cursor<'a> {
     input: &'a str,
@@ -41,20 +43,25 @@ impl<'a> Cursor<'a> {
         self.start
     }
 
+    /// Returns the current index in the input and the end index of the current span
+    /// (exclusive).
     pub fn current_index(&self) -> usize {
         self.input.len() - self.bytes_remaining()
     }
 
+    /// Resets the starting index and returns the old value.
     pub fn reset_start_index(&mut self) -> usize {
         let offset = self.start;
         self.start = self.current_index();
         offset
     }
 
+    /// Returns the current span.
     pub fn span(&self) -> Span<'a> {
         Span::new(self.input, self.start_index(), self.current_index())
     }
 
+    /// Returns the current span and resets the starting index.
     pub fn reset_span(&mut self) -> Span<'a> {
         Span::new(self.input, self.reset_start_index(), self.current_index())
     }

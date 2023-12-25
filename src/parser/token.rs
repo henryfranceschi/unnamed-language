@@ -26,6 +26,7 @@ impl<'a> Token<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Span<'a> {
+    /// Reference to the entire source string.
     source: &'a str,
     /// Start index of the token.
     start: usize,
