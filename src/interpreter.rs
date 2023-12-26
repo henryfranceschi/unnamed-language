@@ -4,6 +4,7 @@ use crate::parser::ast::{Expr, Operator, Stmt};
 
 use self::value::Value;
 
+mod environment;
 pub mod value;
 
 /// Basic treewalk interpreter, will be replaced later by something more efficient.
