@@ -32,6 +32,13 @@ impl Interpreter {
 
                 self.environment.define(name, value);
             }
+            Stmt::If(predicate, consequent, alternative) => {
+                if self.interpret_expr(predicate)?.is_truthy() {
+                    self.interpret_stmt(consequent)?;
+                } else if let Some(alternative) = alternative {
+                    self.interpret_stmt(alternative)?;
+                }
+            }
         }
 
         Ok(())

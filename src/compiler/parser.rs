@@ -84,12 +84,11 @@ impl<'a> Parser<'a> {
 
     fn stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
         let kind = self.peek().kind();
-        if kind == TokenKind::LBrace {
-            self.block_stmt()
-        } else if kind == TokenKind::Let {
-            self.var_decl()
-        } else {
-            self.expr_stmt()
+        match kind {
+            TokenKind::LBrace => self.block_stmt(),
+            TokenKind::Let => self.var_decl(),
+            TokenKind::If => self.if_stmt(),
+            _ => self.expr_stmt(),
         }
     }
 
@@ -108,6 +107,23 @@ impl<'a> Parser<'a> {
         self.expect(TokenKind::RBrace)?;
 
         Ok(Stmt::Block(statments))
+    }
+
+    fn if_stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
+        self.expect(TokenKind::If)?;
+        let predicate = self.expr()?;
+        let consequent = self.block_stmt()?;
+        let alternative = if self.advance_if(TokenKind::Else) {
+            Some(self.block_stmt()?)
+        } else {
+            None
+        };
+
+        Ok(Stmt::If(
+            Box::new(predicate),
+            Box::new(consequent),
+            alternative.map(Box::new),
+        ))
     }
 
     fn expr_stmt(&mut self) -> Result<Stmt, ParseError<'a>> {

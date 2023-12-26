@@ -12,6 +12,8 @@ pub enum Stmt {
     Block(Vec<Stmt>),
     Expr(Box<Expr>),
     VarDecl(String, Option<Box<Expr>>),
+    /// Neither consequent or alternative statements should be any kind of declaration.
+    If(Box<Expr>, Box<Stmt>, Option<Box<Stmt>>),
 }
 
 #[derive(Debug)]
