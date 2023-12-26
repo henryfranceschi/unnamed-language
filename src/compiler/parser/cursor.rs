@@ -2,8 +2,8 @@ use std::str::Chars;
 
 use super::token::Span;
 
-/// `Cursor` iterates over its `input` string, it keeps a `start_index` which is the begining of the
-/// current span in the input.
+/// `Cursor` iterates over its `input` string keeping a `start` index which marks the beginning of
+/// and returning `Span`s.
 #[derive(Debug)]
 pub struct Cursor<'a> {
     input: &'a str,

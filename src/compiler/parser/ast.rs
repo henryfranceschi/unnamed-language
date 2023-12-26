@@ -1,3 +1,12 @@
+use crate::interpreter::value::Value;
+
+use super::token::Span;
+
+pub struct Spanned<'a, T> {
+    span: Span<'a>,
+    spanned: T,
+}
+
 #[derive(Debug)]
 pub enum Stmt {
     Block(Vec<Stmt>),
@@ -75,6 +84,16 @@ impl Operator {
             Add | Sub => (13, 14),
             Mul | Div | Mod => (15, 16),
             Exp => (18, 17),
+            _ => return None,
+        };
+
+        Some(bp)
+    }
+
+    pub(super) fn postfix_binding_power(self) -> Option<(u8, ())> {
+        use Operator::*;
+
+        let bp = match self {
             _ => return None,
         };
 
