@@ -1,4 +1,4 @@
-use crate::parser::token::{Span, TokenKind};
+use super::token::{Span, TokenKind};
 
 use super::{cursor::Cursor, token::Token};
 

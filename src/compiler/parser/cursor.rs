@@ -69,7 +69,7 @@ impl<'a> Cursor<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::cursor::Cursor;
+    use super::Cursor;
 
     #[test]
     fn offset() {
