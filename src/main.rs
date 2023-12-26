@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use unnamed_language::{interpreter::Interpreter, parser::Parser};
+use unnamed_language::{interpreter::Interpreter, compiler::parser::Parser};
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();

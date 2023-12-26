@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-
-use crate::parser::ast::{Expr, Operator, Stmt};
-
-use self::value::Value;
+use self::{environment::Environment, value::Value};
+use crate::compiler::parser::ast::{Expr, Operator, Stmt};
 
 mod environment;
 pub mod value;
@@ -10,81 +7,63 @@ pub mod value;
 /// Basic treewalk interpreter, will be replaced later by something more efficient.
 #[derive(Debug, Default)]
 pub struct Interpreter {
-    globals: HashMap<String, Value>,
+    environment: Environment,
 }
 
 impl Interpreter {
-    pub fn interpret_stmt(&mut self, stmt: &Stmt) {
+    pub fn interpret_stmt(&mut self, stmt: &Stmt) -> Result<(), RuntimeError> {
         match stmt {
             Stmt::Block(stmts) => {
+                self.environment.push();
                 for stmt in stmts {
-                    self.interpret_stmt(stmt);
+                    self.interpret_stmt(stmt)?;
                 }
+                self.environment.pop();
             }
-            Stmt::Expr(expr) => match self.interpret_expr(expr) {
-                Ok(value) => {
-                    println!("value: {:?}", value);
-                }
-                Err(err) => {
-                    eprintln!("runtime error: {}", err.message());
-                }
-            },
+            Stmt::Expr(expr) => {
+                self.interpret_expr(expr)?;
+            }
             Stmt::VarDecl(name, init_expr) => {
                 let value = if let Some(init_expr) = init_expr {
-                    match self.interpret_expr(init_expr) {
-                        Ok(value) => {
-                            println!("value: {:?}", value);
-                            value
-                        }
-                        Err(err) => {
-                            eprintln!("runtime error: {}", err.message());
-                            return;
-                        }
-                    }
+                    self.interpret_expr(init_expr)?
                 } else {
                     Value::Nil
                 };
 
-                self.globals.insert(name.to_owned(), value);
+                self.environment.define(name, value);
             }
-        };
+        }
+
+        Ok(())
     }
 
     fn interpret_expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         match expr {
             Expr::Literal(val) => Ok(*val),
-            Expr::Identifier(name) => {
-                if let Some(value) = self.globals.get(name) {
-                    Ok(*value)
-                } else {
-                    Err(RuntimeError::UndefinedVariable)
-                }
-            }
+            Expr::Identifier(name) => self
+                .environment
+                .get(name)
+                .ok_or(RuntimeError::UndefinedVariable),
             Expr::Assignment(target, expr) => {
                 let right = self.interpret_expr(expr)?;
                 if let Expr::Identifier(name) = target.as_ref() {
-                    if self.globals.contains_key(name) {
-                        self.globals.insert(name.to_owned(), right);
-                        Ok(right)
-                    } else {
-                        Err(RuntimeError::UndefinedVariable)
-                    }
+                    self.environment
+                        .set(name, right)
+                        .ok_or(RuntimeError::UndefinedVariable)
                 } else {
                     unimplemented!()
                 }
             }
-            Expr::Binary(Operator::Or, left, right) => {
+            Expr::Binary(op, left, right) if *op == Operator::Or || *op == Operator::And => {
                 let left = self.interpret_expr(left)?;
-                if left.is_truthy() {
-                    Ok(left)
-                } else {
-                    let right = self.interpret_expr(right)?;
-                    Ok(right)
+                let mut short_circuit = left.is_truthy();
+                // For the 'and' operator we want to short circuit if the left
+                // operand is not truthy.
+                if *op == Operator::And {
+                    short_circuit = !short_circuit;
                 }
-            }
-            Expr::Binary(Operator::And, left, right) => {
-                let left = self.interpret_expr(left)?;
-                if !left.is_truthy() {
+
+                if short_circuit {
                     Ok(left)
                 } else {
                     let right = self.interpret_expr(right)?;
@@ -171,7 +150,6 @@ impl Interpreter {
 
                 Ok(value)
             }
-            _ => todo!(),
         }
     }
 }
