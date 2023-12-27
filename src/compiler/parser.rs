@@ -68,11 +68,19 @@ impl<'a> Parser<'a> {
         if self.advance_if(expected) {
             Ok(())
         } else {
-            let message = if expected.is_variable_length() || expected == TokenKind::Eof {
-                format!("expected {}", expected)
-            } else {
-                format!("expected '{}'", expected)
+            let quote_maybe = |k: TokenKind| {
+                if k.is_variable_length() || k == TokenKind::Eof {
+                    k.to_string()
+                } else {
+                    format!("'{k}'")
+                }
             };
+
+            let message = format!(
+                "expected {} got {}",
+                quote_maybe(expected),
+                quote_maybe(token.kind())
+            );
 
             Err(ParseError::new(&token, message))
         }
