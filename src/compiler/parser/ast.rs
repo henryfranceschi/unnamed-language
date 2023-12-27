@@ -1,19 +1,25 @@
 use crate::interpreter::value::Value;
 
-use super::token::Span;
+// use super::token::Span;
 
-pub struct Spanned<'a, T> {
-    span: Span<'a>,
-    spanned: T,
+// pub struct Spanned<'a, T> {
+//     span: Span<'a>,
+//     spanned: T,
+// }
+
+#[derive(Debug)]
+pub enum Decl {
+    Var(String, Option<Box<Expr>>),
+    Stmt(Box<Stmt>)
 }
 
 #[derive(Debug)]
 pub enum Stmt {
-    Block(Vec<Stmt>),
-    Expr(Box<Expr>),
-    VarDecl(String, Option<Box<Expr>>),
     /// Neither consequent or alternative statements should be any kind of declaration.
     If(Box<Expr>, Box<Stmt>, Option<Box<Stmt>>),
+    Expr(Box<Expr>),
+    Block(Vec<Decl>),
+    Print(Box<Expr>),
 }
 
 #[derive(Debug)]
@@ -92,13 +98,13 @@ impl Operator {
         Some(bp)
     }
 
-    pub(super) fn postfix_binding_power(self) -> Option<(u8, ())> {
-        use Operator::*;
+    // pub(super) fn postfix_binding_power(self) -> Option<(u8, ())> {
+    //     use Operator::*;
 
-        let bp = match self {
-            _ => return None,
-        };
+    //     let bp = match self {
+    //         _ => return None,
+    //     };
 
-        Some(bp)
-    }
+    //     Some(bp)
+    // }
 }

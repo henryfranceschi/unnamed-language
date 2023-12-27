@@ -1,7 +1,7 @@
 use crate::interpreter::value::Value;
 
 use self::{
-    ast::{Expr, Operator, Stmt},
+    ast::{Decl, Expr, Operator, Stmt},
     scanner::Scanner,
     token::{Span, Token, TokenKind},
 };
@@ -86,15 +86,22 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Stmt, ParseError<'a>> {
-        self.stmt()
+    pub fn parse(&mut self) -> Result<Decl, ParseError<'a>> {
+        self.decl()
+    }
+
+    fn decl(&mut self) -> Result<Decl, ParseError<'a>> {
+        let kind = self.peek().kind();
+        match kind {
+            TokenKind::Let => self.var_decl(),
+            _ => Ok(Decl::Stmt(Box::new(self.stmt()?))),
+        }
     }
 
     fn stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
         let kind = self.peek().kind();
         match kind {
             TokenKind::LBrace => self.block_stmt(),
-            TokenKind::Let => self.var_decl(),
             TokenKind::If => self.if_stmt(),
             _ => self.expr_stmt(),
         }
@@ -103,26 +110,26 @@ impl<'a> Parser<'a> {
     fn block_stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
         self.expect(TokenKind::LBrace)?;
 
-        let mut statments = vec![];
+        let mut declarations = vec![];
         loop {
             if matches!(self.peek().kind(), TokenKind::Eof | TokenKind::RBrace) {
                 break;
             }
 
-            statments.push(self.stmt()?);
+            declarations.push(self.decl()?);
         }
 
         self.expect(TokenKind::RBrace)?;
 
-        Ok(Stmt::Block(statments))
+        Ok(Stmt::Block(declarations))
     }
 
     fn if_stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
         self.expect(TokenKind::If)?;
         let predicate = self.expr()?;
-        let consequent = self.block_stmt()?;
+        let consequent = self.stmt()?;
         let alternative = if self.advance_if(TokenKind::Else) {
-            Some(self.block_stmt()?)
+            Some(self.stmt()?)
         } else {
             None
         };
@@ -142,7 +149,7 @@ impl<'a> Parser<'a> {
         Ok(Stmt::Expr(Box::new(expr)))
     }
 
-    fn var_decl(&mut self) -> Result<Stmt, ParseError<'a>> {
+    fn var_decl(&mut self) -> Result<Decl, ParseError<'a>> {
         self.expect(TokenKind::Let)?;
 
         let name = self.advance().span().slice().to_owned();
@@ -154,7 +161,7 @@ impl<'a> Parser<'a> {
 
         self.expect(TokenKind::Semicolon)?;
 
-        Ok(Stmt::VarDecl(name, init_expr))
+        Ok(Decl::Var(name, init_expr))
     }
 
     fn expr(&mut self) -> Result<Expr, ParseError<'a>> {

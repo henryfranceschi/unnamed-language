@@ -66,9 +66,9 @@ fn run_from_file(path: &Path) {
 fn run(source: String, interpreter: &mut Interpreter) {
     let mut parser = Parser::new(&source);
     match parser.parse() {
-        Ok(stmt) => {
-            println!("ast: {:?}", stmt);
-            interpreter.interpret_stmt(&stmt);
+        Ok(decl) => {
+            println!("ast: {:?}", decl);
+            interpreter.interpret_decl(&decl);
         }
         Err(error) => {
             eprintln!("parsing error: {}", error.message());

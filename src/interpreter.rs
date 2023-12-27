@@ -1,5 +1,5 @@
 use self::{environment::Environment, value::Value};
-use crate::compiler::parser::ast::{Expr, Operator, Stmt};
+use crate::compiler::parser::ast::{Decl, Expr, Operator, Stmt};
 
 mod environment;
 pub mod value;
@@ -11,19 +11,9 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    pub fn interpret_stmt(&mut self, stmt: &Stmt) -> Result<(), RuntimeError> {
-        match stmt {
-            Stmt::Block(stmts) => {
-                self.environment.push();
-                for stmt in stmts {
-                    self.interpret_stmt(stmt)?;
-                }
-                self.environment.pop();
-            }
-            Stmt::Expr(expr) => {
-                self.interpret_expr(expr)?;
-            }
-            Stmt::VarDecl(name, init_expr) => {
+    pub fn interpret_decl(&mut self, decl: &Decl) -> Result<(), RuntimeError> {
+        match decl {
+            Decl::Var(name, init_expr) => {
                 let value = if let Some(init_expr) = init_expr {
                     self.interpret_expr(init_expr)?
                 } else {
@@ -31,6 +21,23 @@ impl Interpreter {
                 };
 
                 self.environment.define(name, value);
+            }
+            Decl::Stmt(stmt) => self.interpret_stmt(stmt)?,
+        }
+
+        Ok(())
+    }
+    pub fn interpret_stmt(&mut self, stmt: &Stmt) -> Result<(), RuntimeError> {
+        match stmt {
+            Stmt::Block(decls) => {
+                self.environment.push();
+                for decl in decls {
+                    self.interpret_decl(decl)?;
+                }
+                self.environment.pop();
+            }
+            Stmt::Expr(expr) => {
+                self.interpret_expr(expr)?;
             }
             Stmt::If(predicate, consequent, alternative) => {
                 if self.interpret_expr(predicate)?.is_truthy() {
