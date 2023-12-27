@@ -13,45 +13,46 @@ pub struct Interpreter {
 impl Interpreter {
     pub fn interpret(&mut self, script: &Script) -> Result<(), RuntimeError> {
         for decl in &script.decls {
-            self.interpret_decl(decl)?;
+            self.decl(decl)?;
         }
 
         Ok(())
     }
 
-    pub fn interpret_decl(&mut self, decl: &Decl) -> Result<(), RuntimeError> {
+    fn decl(&mut self, decl: &Decl) -> Result<(), RuntimeError> {
         match decl {
             Decl::Var(name, init_expr) => {
                 let value = if let Some(init_expr) = init_expr {
-                    self.interpret_expr(init_expr)?
+                    self.expr(init_expr)?
                 } else {
                     Value::Nil
                 };
 
                 self.environment.define(name, value);
             }
-            Decl::Stmt(stmt) => self.interpret_stmt(stmt)?,
+            Decl::Stmt(stmt) => self.stmt(stmt)?,
         }
 
         Ok(())
     }
-    pub fn interpret_stmt(&mut self, stmt: &Stmt) -> Result<(), RuntimeError> {
+
+    fn stmt(&mut self, stmt: &Stmt) -> Result<(), RuntimeError> {
         match stmt {
             Stmt::Block(decls) => {
                 self.environment.push();
                 for decl in decls {
-                    self.interpret_decl(decl)?;
+                    self.decl(decl)?;
                 }
                 self.environment.pop();
             }
             Stmt::Expr(expr) => {
-                self.interpret_expr(expr)?;
+                self.expr(expr)?;
             }
             Stmt::If(predicate, consequent, alternative) => {
-                if self.interpret_expr(predicate)?.is_truthy() {
-                    self.interpret_stmt(consequent)?;
+                if self.expr(predicate)?.is_truthy() {
+                    self.stmt(consequent)?;
                 } else if let Some(alternative) = alternative {
-                    self.interpret_stmt(alternative)?;
+                    self.stmt(alternative)?;
                 }
             }
         }
@@ -59,7 +60,7 @@ impl Interpreter {
         Ok(())
     }
 
-    fn interpret_expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
+    fn expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         match expr {
             Expr::Literal(val) => Ok(*val),
             Expr::Identifier(name) => self
@@ -67,7 +68,7 @@ impl Interpreter {
                 .get(name)
                 .ok_or(RuntimeError::UndefinedVariable),
             Expr::Assignment(target, expr) => {
-                let right = self.interpret_expr(expr)?;
+                let right = self.expr(expr)?;
                 if let Expr::Identifier(name) = target.as_ref() {
                     self.environment
                         .set(name, right)
@@ -77,7 +78,7 @@ impl Interpreter {
                 }
             }
             Expr::Binary(op, left, right) if *op == Operator::Or || *op == Operator::And => {
-                let left = self.interpret_expr(left)?;
+                let left = self.expr(left)?;
                 let mut short_circuit = left.is_truthy();
                 // For the 'and' operator we want to short circuit if the left
                 // operand is not truthy.
@@ -88,13 +89,13 @@ impl Interpreter {
                 if short_circuit {
                     Ok(left)
                 } else {
-                    let right = self.interpret_expr(right)?;
+                    let right = self.expr(right)?;
                     Ok(right)
                 }
             }
             Expr::Binary(op, left, right) => {
-                let left = self.interpret_expr(left)?;
-                let right = self.interpret_expr(right)?;
+                let left = self.expr(left)?;
+                let right = self.expr(right)?;
 
                 let value = match op {
                     Operator::Eq => Value::Bool(left == right),
@@ -151,7 +152,7 @@ impl Interpreter {
                 Ok(value)
             }
             Expr::Unary(op, expr) => {
-                let right = self.interpret_expr(expr)?;
+                let right = self.expr(expr)?;
                 let value = match op {
                     Operator::Not => {
                         if let Value::Bool(b) = right {
