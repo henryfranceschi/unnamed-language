@@ -7,6 +7,10 @@ use crate::interpreter::value::Value;
 //     spanned: T,
 // }
 
+pub struct Script {
+    pub decls: Vec<Decl>,
+}
+
 #[derive(Debug)]
 pub enum Decl {
     Var(String, Option<Box<Expr>>),

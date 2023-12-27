@@ -1,5 +1,5 @@
 use self::{environment::Environment, value::Value};
-use crate::compiler::parser::ast::{Decl, Expr, Operator, Stmt};
+use crate::compiler::parser::ast::{Decl, Expr, Operator, Stmt, Script};
 
 mod environment;
 pub mod value;
@@ -11,6 +11,14 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
+    pub fn interpret(&mut self, script: &Script) -> Result<(), RuntimeError> {
+        for decl in &script.decls {
+            self.interpret_decl(decl)?;
+        }
+
+        Ok(())
+    }
+
     pub fn interpret_decl(&mut self, decl: &Decl) -> Result<(), RuntimeError> {
         match decl {
             Decl::Var(name, init_expr) => {

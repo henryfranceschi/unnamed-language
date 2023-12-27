@@ -1,7 +1,7 @@
 use crate::interpreter::value::Value;
 
 use self::{
-    ast::{Decl, Expr, Operator, Stmt},
+    ast::{Decl, Expr, Operator, Script, Stmt},
     scanner::Scanner,
     token::{Span, Token, TokenKind},
 };
@@ -86,8 +86,17 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Decl, ParseError<'a>> {
-        self.decl()
+    pub fn parse(&mut self) -> Result<Script, ParseError<'a>> {
+        self.script()
+    }
+
+    fn script(&mut self) -> Result<Script, ParseError<'a>> {
+        let mut decls = vec![];
+        while self.peek().kind() != TokenKind::Eof {
+            decls.push(self.decl()?);
+        }
+
+        Ok(Script { decls })
     }
 
     fn decl(&mut self) -> Result<Decl, ParseError<'a>> {
