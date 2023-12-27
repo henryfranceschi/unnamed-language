@@ -1,3 +1,5 @@
+use thiserror::Error;
+
 use self::{environment::Environment, value::Value};
 use crate::compiler::parser::ast::{Decl, Expr, Operator, Stmt, Script};
 
@@ -187,19 +189,12 @@ pub fn check_number_operands(a: &Value, b: &Value) -> Result<(f64, f64), Runtime
 
 // Currently we just keep track of which type of error occured, we need to change this so it
 // contains a span so we can report to the user where the error occured.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Error, Clone, Copy)]
 pub enum RuntimeError {
+    #[error("unsupported operand type")]
     InvalidOperand,
+    #[error("division by zero is undefined")]
     DivisionByZero,
+    #[error("variable is not defined")]
     UndefinedVariable,
-}
-
-impl RuntimeError {
-    fn message(self) -> &'static str {
-        match self {
-            RuntimeError::InvalidOperand => "unsupported operand type",
-            RuntimeError::DivisionByZero => "division by zero is undefined",
-            RuntimeError::UndefinedVariable => "variable is not defined",
-        }
-    }
 }
