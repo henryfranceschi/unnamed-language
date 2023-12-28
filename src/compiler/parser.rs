@@ -63,10 +63,10 @@ impl<'a> Parser<'a> {
     }
 
     /// Advances if next token equals `expected`, otherwise returns `ParseError`.
-    fn expect(&mut self, expected: TokenKind) -> Result<(), ParseError<'a>> {
+    fn expect(&mut self, expected: TokenKind) -> Result<Token<'a>, ParseError<'a>> {
         let token = self.peek();
-        if self.advance_if(expected) {
-            Ok(())
+        if token.kind() == expected {
+            Ok(self.advance())
         } else {
             let quote_maybe = |k: TokenKind| {
                 if k.is_variable_length() || k == TokenKind::Eof {
@@ -108,8 +108,7 @@ impl<'a> Parser<'a> {
     }
 
     fn stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
-        let kind = self.peek().kind();
-        match kind {
+        match self.peek().kind() {
             TokenKind::LBrace => self.block_stmt(),
             TokenKind::If => self.if_stmt(),
             _ => self.expr_stmt(),
@@ -161,7 +160,7 @@ impl<'a> Parser<'a> {
     fn var_decl(&mut self) -> Result<Decl, ParseError<'a>> {
         self.expect(TokenKind::Let)?;
 
-        let name = self.advance().span().slice().to_owned();
+        let name = self.expect(TokenKind::Identifier)?.slice().into();
         let init_expr = if self.advance_if(TokenKind::Equal) {
             Some(Box::new(self.expr()?))
         } else {
@@ -180,10 +179,8 @@ impl<'a> Parser<'a> {
     fn expr_bp(&mut self, min_bp: u8) -> Result<Expr, ParseError<'a>> {
         let token = self.advance();
         let mut expr = match token.kind() {
-            TokenKind::Identifier => Expr::Identifier(token.span().slice().to_owned()),
-            TokenKind::Number => {
-                Expr::Literal(Value::Number(token.span().slice().parse().unwrap()))
-            }
+            TokenKind::Identifier => Expr::Identifier(token.slice().into()),
+            TokenKind::Number => Expr::Literal(Value::Number(token.slice().parse().unwrap())),
             TokenKind::String => {
                 todo!();
             }
