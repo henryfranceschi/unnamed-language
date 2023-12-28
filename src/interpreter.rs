@@ -30,7 +30,7 @@ impl Interpreter {
                     Value::Nil
                 };
 
-                self.environment.define(name, value);
+                self.environment.define(name.as_ref(), value);
             }
             Decl::Stmt(stmt) => self.stmt(stmt)?,
         }
@@ -67,13 +67,13 @@ impl Interpreter {
             Expr::Literal(val) => Ok(*val),
             Expr::Identifier(name) => self
                 .environment
-                .get(name)
+                .get(name.as_ref())
                 .ok_or(RuntimeError::UndefinedVariable),
             Expr::Assignment(target, expr) => {
                 let right = self.expr(expr)?;
                 if let Expr::Identifier(name) = target.as_ref() {
                     self.environment
-                        .set(name, right)
+                        .set(name.as_ref(), right)
                         .ok_or(RuntimeError::UndefinedVariable)?;
 
                     Ok(right)

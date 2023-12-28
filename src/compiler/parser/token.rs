@@ -15,6 +15,10 @@ impl<'a> Token<'a> {
         self.span
     }
 
+    pub fn slice(self) -> &'a str {
+        self.span().slice()
+    }
+
     pub fn kind(&self) -> TokenKind {
         self.kind
     }

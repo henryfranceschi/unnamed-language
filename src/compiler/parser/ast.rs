@@ -13,8 +13,9 @@ pub struct Script {
 
 #[derive(Debug)]
 pub enum Decl {
-    Var(String, Option<Box<Expr>>),
-    Stmt(Box<Stmt>)
+    Var(Identifier, Option<Box<Expr>>),
+    Func(Identifier, Vec<Identifier>, Box<Stmt>),
+    Stmt(Box<Stmt>),
 }
 
 #[derive(Debug)]
@@ -29,11 +30,26 @@ pub enum Stmt {
 #[derive(Debug)]
 pub enum Expr {
     Literal(Value),
-    Identifier(String),
+    Identifier(Identifier),
     /// Currently the only valid value for `0` is `Identifier`.
     Assignment(Box<Expr>, Box<Expr>),
     Binary(Operator, Box<Expr>, Box<Expr>),
     Unary(Operator, Box<Expr>),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Identifier(String);
+
+impl From<&str> for Identifier {
+    fn from(value: &str) -> Self {
+        Self(value.to_owned())
+    }
+}
+
+impl AsRef<str> for Identifier {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
