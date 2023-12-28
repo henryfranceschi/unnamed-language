@@ -74,7 +74,9 @@ impl Interpreter {
                 if let Expr::Identifier(name) = target.as_ref() {
                     self.environment
                         .set(name, right)
-                        .ok_or(RuntimeError::UndefinedVariable)
+                        .ok_or(RuntimeError::UndefinedVariable)?;
+
+                    Ok(right)
                 } else {
                     unimplemented!()
                 }
