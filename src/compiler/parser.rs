@@ -206,31 +206,27 @@ impl<'a> Parser<'a> {
             }
         };
 
-        loop {
-            // We only continue if the peeked token is a valid operator.
-            let Ok(operator): Result<Operator, _> = self.peek().try_into() else {
-                break;
-            };
-
+        // We only continue if the peeked token is a valid operator.
+        while let Ok(operator) = Operator::try_from(self.peek()) {
             // Handle infix case.
             if let Some((l_bp, r_bp)) = operator.infix_binding_power() {
                 if l_bp < min_bp {
                     break;
                 }
 
+                // We only advance if the peeked token is a valid infix operator, otherwise we
+                // leave the token to be handled elsewhere.
+                self.advance();
                 if min_bp == 0 && operator == Operator::Assign {
-                    self.advance();
-                    expr = Expr::Assignment(Box::new(expr), Box::new(self.expr()?))
+                    expr = Expr::Assignment(Box::new(expr), Box::new(self.expr()?));
                 } else {
-                    // We only advance if the peeked token is a valid infix operator, otherwise we
-                    // leave the token to be handled elsewhere.
-                    self.advance();
                     expr = Expr::Binary(operator, Box::new(expr), Box::new(self.expr_bp(r_bp)?));
-                    continue;
                 }
-            }
 
-            break;
+                continue;
+            } else {
+                break;
+            }
         }
 
         if self.peek().kind() == TokenKind::Equal {
@@ -261,39 +257,5 @@ impl<'a> ParseError<'a> {
 
     pub fn message(&self) -> &str {
         &self.message
-    }
-}
-
-impl<'a> TryFrom<Token<'a>> for Operator {
-    type Error = ParseError<'a>;
-
-    fn try_from(token: Token<'a>) -> Result<Self, Self::Error> {
-        let op = match token.kind() {
-            TokenKind::Equal => Self::Assign,
-            TokenKind::Or => Self::Or,
-            TokenKind::And => Self::And,
-            TokenKind::Not => Self::Not,
-            TokenKind::EqualEqual => Self::Eq,
-            TokenKind::BangEqual => Self::Ne,
-            TokenKind::Less => Self::Lt,
-            TokenKind::Greater => Self::Gt,
-            TokenKind::LessEqual => Self::Le,
-            TokenKind::GreaterEqual => Self::Ge,
-            TokenKind::Plus => Self::Add,
-            TokenKind::Minus => Self::Sub,
-            TokenKind::Star => Self::Mul,
-            TokenKind::Slash => Self::Div,
-            TokenKind::Percent => Self::Mod,
-            TokenKind::StarStar => Self::Exp,
-            _ => {
-                let message = format!("unexpected token: {:?}", token);
-                return Err(ParseError {
-                    span: token.span(),
-                    message,
-                });
-            }
-        };
-
-        Ok(op)
     }
 }

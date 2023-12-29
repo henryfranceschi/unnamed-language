@@ -1,11 +1,8 @@
+use crate::compiler::parser::{
+    token::{Token, TokenKind},
+    ParseError,
+};
 use crate::interpreter::value::Value;
-
-// use super::token::Span;
-
-// pub struct Spanned<'a, T> {
-//     span: Span<'a>,
-//     spanned: T,
-// }
 
 pub struct Script {
     pub decls: Vec<Decl>,
@@ -127,4 +124,38 @@ impl Operator {
 
     //     Some(bp)
     // }
+}
+
+impl<'a> TryFrom<Token<'a>> for Operator {
+    type Error = ParseError<'a>;
+
+    fn try_from(token: Token<'a>) -> Result<Self, Self::Error> {
+        let op = match token.kind() {
+            TokenKind::Equal => Self::Assign,
+            TokenKind::Or => Self::Or,
+            TokenKind::And => Self::And,
+            TokenKind::Not => Self::Not,
+            TokenKind::EqualEqual => Self::Eq,
+            TokenKind::BangEqual => Self::Ne,
+            TokenKind::Less => Self::Lt,
+            TokenKind::Greater => Self::Gt,
+            TokenKind::LessEqual => Self::Le,
+            TokenKind::GreaterEqual => Self::Ge,
+            TokenKind::Plus => Self::Add,
+            TokenKind::Minus => Self::Sub,
+            TokenKind::Star => Self::Mul,
+            TokenKind::Slash => Self::Div,
+            TokenKind::Percent => Self::Mod,
+            TokenKind::StarStar => Self::Exp,
+            _ => {
+                let message = format!("unexpected token: {:?}", token);
+                return Err(ParseError {
+                    span: token.span(),
+                    message,
+                });
+            }
+        };
+
+        Ok(op)
+    }
 }
