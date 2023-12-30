@@ -182,6 +182,11 @@ impl<'a> Parser<'a> {
         let mut params = vec![];
         while !matches!(self.peek().kind(), TokenKind::Eof | TokenKind::RParen) {
             params.push(self.expect(TokenKind::Identifier)?.slice().into());
+            // We only want to continue if there are more params, but we also allow for trailing
+            // commas, this is handled by the loop condition.
+            if !self.advance_if(TokenKind::Comma) {
+                break;
+            }
         }
         self.expect(TokenKind::RParen)?;
 
