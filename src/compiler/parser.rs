@@ -103,6 +103,7 @@ impl<'a> Parser<'a> {
         let kind = self.peek().kind();
         match kind {
             TokenKind::Let => self.var_decl(),
+            TokenKind::Func => self.func_decl(),
             _ => Ok(Decl::Stmt(Box::new(self.stmt()?))),
         }
     }
@@ -170,6 +171,21 @@ impl<'a> Parser<'a> {
         self.expect(TokenKind::Semicolon)?;
 
         Ok(Decl::Var(name, init_expr))
+    }
+
+    fn func_decl(&mut self) -> Result<Decl, ParseError<'a>> {
+        self.expect(TokenKind::Func)?;
+
+        let name = self.expect(TokenKind::Identifier)?.slice().into();
+
+        self.expect(TokenKind::LParen)?;
+        let mut params = vec![];
+        while !matches!(self.peek().kind(), TokenKind::Eof | TokenKind::RParen) {
+            params.push(self.expect(TokenKind::Identifier)?.slice().into());
+        }
+        self.expect(TokenKind::RParen)?;
+
+        Ok(Decl::Func(name, params, Box::new(self.block_stmt()?)))
     }
 
     fn expr(&mut self) -> Result<Expr, ParseError<'a>> {
