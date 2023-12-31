@@ -4,6 +4,7 @@ use self::{environment::Environment, value::Value};
 use crate::compiler::parser::ast::{Decl, Expr, Operator, Stmt, Script};
 
 mod environment;
+pub mod object;
 pub mod value;
 
 /// Basic treewalk interpreter, will be replaced later by something more efficient.
