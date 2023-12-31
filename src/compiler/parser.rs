@@ -108,6 +108,41 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn var_decl(&mut self) -> Result<Decl, ParseError<'a>> {
+        self.expect(TokenKind::Let)?;
+
+        let name = self.expect(TokenKind::Identifier)?.slice().into();
+        let init_expr = if self.advance_if(TokenKind::Equal) {
+            Some(Box::new(self.expr()?))
+        } else {
+            None
+        };
+
+        self.expect(TokenKind::Semicolon)?;
+
+        Ok(Decl::Var(name, init_expr))
+    }
+
+    fn func_decl(&mut self) -> Result<Decl, ParseError<'a>> {
+        self.expect(TokenKind::Func)?;
+
+        let name = self.expect(TokenKind::Identifier)?.slice().into();
+
+        self.expect(TokenKind::LParen)?;
+        let mut params = vec![];
+        while !matches!(self.peek().kind(), TokenKind::Eof | TokenKind::RParen) {
+            params.push(self.expect(TokenKind::Identifier)?.slice().into());
+            // We only want to continue if there are more params, but we also allow for trailing
+            // commas, this is handled by the loop condition.
+            if !self.advance_if(TokenKind::Comma) {
+                break;
+            }
+        }
+        self.expect(TokenKind::RParen)?;
+
+        Ok(Decl::Func(name, params, Box::new(self.block_stmt()?)))
+    }
+
     fn stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
         match self.peek().kind() {
             TokenKind::LBrace => self.block_stmt(),
@@ -156,41 +191,6 @@ impl<'a> Parser<'a> {
         self.expect(TokenKind::Semicolon)?;
 
         Ok(Stmt::Expr(Box::new(expr)))
-    }
-
-    fn var_decl(&mut self) -> Result<Decl, ParseError<'a>> {
-        self.expect(TokenKind::Let)?;
-
-        let name = self.expect(TokenKind::Identifier)?.slice().into();
-        let init_expr = if self.advance_if(TokenKind::Equal) {
-            Some(Box::new(self.expr()?))
-        } else {
-            None
-        };
-
-        self.expect(TokenKind::Semicolon)?;
-
-        Ok(Decl::Var(name, init_expr))
-    }
-
-    fn func_decl(&mut self) -> Result<Decl, ParseError<'a>> {
-        self.expect(TokenKind::Func)?;
-
-        let name = self.expect(TokenKind::Identifier)?.slice().into();
-
-        self.expect(TokenKind::LParen)?;
-        let mut params = vec![];
-        while !matches!(self.peek().kind(), TokenKind::Eof | TokenKind::RParen) {
-            params.push(self.expect(TokenKind::Identifier)?.slice().into());
-            // We only want to continue if there are more params, but we also allow for trailing
-            // commas, this is handled by the loop condition.
-            if !self.advance_if(TokenKind::Comma) {
-                break;
-            }
-        }
-        self.expect(TokenKind::RParen)?;
-
-        Ok(Decl::Func(name, params, Box::new(self.block_stmt()?)))
     }
 
     fn expr(&mut self) -> Result<Expr, ParseError<'a>> {
