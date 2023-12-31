@@ -12,7 +12,7 @@ impl Obj {
         }
     }
 
-    unsafe fn downcast<'a, T>(&mut self) -> &'a mut T {
+    unsafe fn downcast<T>(&mut self) -> &mut T {
         let ptr = self.0 as *mut T;
         &mut (*ptr)
     }
