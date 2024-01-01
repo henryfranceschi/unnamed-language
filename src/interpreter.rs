@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 use self::{environment::Environment, value::Value};
-use crate::compiler::parser::ast::{Decl, Expr, Operator, Stmt, Script};
+use crate::compiler::parser::ast::{Decl, Expr, Operator, Script, Stmt};
 
 mod environment;
 pub mod object;
