@@ -5,7 +5,7 @@ pub struct Obj(*mut ObjCommon);
 
 impl<T: SubObject> From<Box<T>> for Obj {
     fn from(value: Box<T>) -> Self {
-        Obj(Box::into_raw(Box::new(value)) as *mut ObjCommon)
+        Obj(Box::into_raw(value) as *mut ObjCommon)
     }
 }
 
