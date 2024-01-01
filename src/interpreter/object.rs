@@ -1,33 +1,46 @@
+use std::ops::{Deref, DerefMut};
+
 /// Object pointer.
 pub struct Obj(*mut ObjCommon);
 
-impl Obj {
-    pub fn marked(&self) -> bool {
-        unsafe { (*self.0).marked }
+impl<T: SubObject> From<Box<T>> for Obj {
+    fn from(value: Box<T>) -> Self {
+        Obj(Box::into_raw(Box::new(value)) as *mut ObjCommon)
     }
+}
 
-    pub fn set_marked(&mut self, marked: bool) {
+impl Deref for Obj {
+    type Target = ObjCommon;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.0 }
+    }
+}
+
+impl DerefMut for Obj {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.0 }
+    }
+}
+
+impl<T: SubObject> AsRef<T> for Obj {
+    fn as_ref(&self) -> &T {
         unsafe {
-            (*self.0).marked = marked;
+            assert_eq!((*self.0).kind, T::KIND);
+
+            let ptr = self.0 as *mut T;
+            &mut *ptr
         }
     }
+}
 
-    unsafe fn downcast<T>(&mut self) -> &mut T {
-        let ptr = self.0 as *mut T;
-        &mut (*ptr)
-    }
-
-    pub fn obj_as_string(&mut self) -> &mut ObjString {
+impl<T: SubObject> AsMut<T> for Obj {
+    fn as_mut(&mut self) -> &mut T {
         unsafe {
-            assert!((*self.0).kind == ObjKind::String);
-            self.downcast()
-        }
-    }
+            assert_eq!((*self.0).kind, T::KIND);
 
-    pub fn obj_as_function(&mut self) -> &mut ObjFunction {
-        unsafe {
-            assert!((*self.0).kind == ObjKind::Function);
-            self.downcast()
+            let ptr = self.0 as *mut T;
+            &mut *ptr
         }
     }
 }
@@ -47,9 +60,19 @@ impl Drop for Obj {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+enum ObjKind {
+    String,
+    Function,
+}
+
+trait SubObject {
+    const KIND: ObjKind;
+}
+
 #[repr(C)]
-struct ObjCommon {
-    marked: bool,
+pub struct ObjCommon {
+    pub marked: bool,
     kind: ObjKind,
 }
 
@@ -62,56 +85,42 @@ impl ObjCommon {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum ObjKind {
-    String,
-    Function,
-}
-
 #[repr(C)]
 pub struct ObjString {
-    obj: ObjCommon,
+    pub obj: ObjCommon,
     data: String,
 }
 
-impl ObjString {
-    pub fn new(data: String) -> Self {
-        Self {
-            obj: ObjCommon::new(ObjKind::String),
-            data,
-        }
-    }
+impl SubObject for ObjString {
+    const KIND: ObjKind = ObjKind::String;
 }
 
-impl From<ObjString> for Obj {
-    fn from(value: ObjString) -> Self {
-        let b = Box::new(value);
-        let ptr = Box::into_raw(b);
-        let c = ptr as *mut ObjCommon;
-        Obj(c)
+impl ObjString {
+    pub fn obj(data: String) -> Obj {
+        Box::new(Self {
+            obj: ObjCommon::new(Self::KIND),
+            data,
+        })
+        .into()
     }
 }
 
 #[repr(C)]
 pub struct ObjFunction {
-    obj: ObjCommon,
+    pub obj: ObjCommon,
     arity: u8,
 }
 
-impl ObjFunction {
-    pub fn new(arity: u8) -> Self {
-        Self {
-            obj: ObjCommon::new(ObjKind::Function),
-            arity,
-        }
-    }
+impl SubObject for ObjFunction {
+    const KIND: ObjKind = ObjKind::Function;
 }
 
-impl From<ObjFunction> for Obj {
-    fn from(value: ObjFunction) -> Self {
-        let b = Box::new(value);
-        let ptr = Box::into_raw(b);
-        let c = ptr as *mut ObjCommon;
-        Obj(c)
+impl ObjFunction {
+    pub fn obj(arity: u8) -> Obj {
+        Box::new(Self {
+            obj: ObjCommon::new(Self::KIND),
+            arity,
+        })
+        .into()
     }
 }
