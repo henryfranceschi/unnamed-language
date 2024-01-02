@@ -1,4 +1,9 @@
-use std::ops::{Deref, DerefMut};
+use std::{
+    collections::HashMap,
+    ops::{Deref, DerefMut},
+};
+
+use super::value::Value;
 
 /// Object pointer.
 pub struct Obj(*mut ObjCommon);
@@ -55,6 +60,9 @@ impl Drop for Obj {
                 ObjKind::Function => {
                     let _ = Box::from_raw(self.0 as *mut ObjFunction);
                 }
+                ObjKind::Instance => {
+                    let _ = Box::from_raw(self.0 as *mut ObjInstance);
+                }
             }
         }
     }
@@ -64,6 +72,7 @@ impl Drop for Obj {
 enum ObjKind {
     String,
     Function,
+    Instance,
 }
 
 trait SubObject {
@@ -120,6 +129,26 @@ impl ObjFunction {
         Box::new(Self {
             obj: ObjCommon::new(Self::KIND),
             arity,
+        })
+        .into()
+    }
+}
+
+#[repr(C)]
+pub struct ObjInstance {
+    pub obj: ObjCommon,
+    fields: HashMap<String, Value>,
+}
+
+impl SubObject for ObjInstance {
+    const KIND: ObjKind = ObjKind::Instance;
+}
+
+impl ObjInstance {
+    pub fn obj() -> Obj {
+        Box::new(Self {
+            obj: ObjCommon::new(Self::KIND),
+            fields: HashMap::new(),
         })
         .into()
     }
