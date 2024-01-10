@@ -58,6 +58,11 @@ impl Interpreter {
                     self.stmt(alternative)?;
                 }
             }
+            Stmt::While(predicate, consequent) => {
+                while self.expr(predicate)?.is_truthy() {
+                    self.stmt(consequent)?;
+                }
+            }
         }
 
         Ok(())

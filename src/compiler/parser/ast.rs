@@ -19,6 +19,7 @@ pub enum Decl {
 pub enum Stmt {
     /// Neither consequent or alternative statements should be any kind of declaration.
     If(Box<Expr>, Box<Stmt>, Option<Box<Stmt>>),
+    While(Box<Expr>, Box<Stmt>),
     Expr(Box<Expr>),
     Block(Vec<Decl>),
     Print(Box<Expr>),

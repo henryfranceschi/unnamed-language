@@ -147,6 +147,7 @@ impl<'a> Parser<'a> {
         match self.peek().kind() {
             TokenKind::LBrace => self.block_stmt(),
             TokenKind::If => self.if_stmt(),
+            TokenKind::While => self.while_stmt(),
             _ => self.expr_stmt(),
         }
     }
@@ -183,6 +184,14 @@ impl<'a> Parser<'a> {
             Box::new(consequent),
             alternative.map(Box::new),
         ))
+    }
+
+    fn while_stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
+        self.expect(TokenKind::While)?;
+        let predicate = self.expr()?;
+        let consequent = self.stmt()?;
+
+        Ok(Stmt::While(Box::new(predicate), Box::new(consequent)))
     }
 
     fn expr_stmt(&mut self) -> Result<Stmt, ParseError<'a>> {
